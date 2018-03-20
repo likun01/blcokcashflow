@@ -209,7 +209,7 @@ class MemberPaymentAPIView(APIView):
         ms = MemberService.objects.get(pk=mspk)
 
         last_date = user.member_last_date
-        if last_date and now().date <= last_date:
+        if last_date and now().date() <= last_date:
             start_date = last_date + datetime.timedelta(days=1)
         else:
             start_date = now().date()
