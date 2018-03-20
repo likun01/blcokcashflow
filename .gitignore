@@ -99,7 +99,6 @@ ENV/
 
 # mypy
 .mypy_cache/
-blockcashflow/local_settings.py
 .metadata/
 .project
 .pydevproject
