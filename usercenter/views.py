@@ -3,7 +3,8 @@ from rest_framework.views import APIView
 from django.db import transaction
 from django.db.models import Q
 from usercenter.models import User, MemberService, MemberOrder,\
-    MemberOrderNotificationRecord, SubscribeSetting, Subscribe, DeivceVcode
+    MemberOrderNotificationRecord, SubscribeSetting, Subscribe, DeivceVcode,\
+    EmailEcode
 from django.contrib.auth import authenticate, login
 
 from common.utils import random_number, md5, debug
@@ -89,7 +90,8 @@ class LoginEcodeAPIView(APIView):
         data = request.query_params.copy()
         email = data.get('email')
         ecode = random_number(4)
-        request.session['ecode'] = ecode
+        EmailEcode.objects.update_or_create(
+            email=email, defaults={'ecode': ecode})
         message = u'【BCF】您的邮件验证码为：{0}'.format(ecode)
         send_mail(u'邮件验证码', message, settings.SERVER_EMAIL,
                   [email, ], html_message=message)
@@ -139,10 +141,13 @@ class LoginCheckEcodeAPIView(APIView):
     验证邮箱验证码是否正确
     '''
 
+    @app_data_required('email', 'ecode')
     def get(self, request, *args, **kwargs):
         data = request.query_params.copy()
         ecode = data.get('ecode')
-        origin_ecode = request.session.get('ecode')
+        email = data.get('email')
+        ec = EmailEcode.objects.filter(email=email).first()
+        origin_ecode = ec.ecode if ec else ''
         return Response({'valid': ecode == origin_ecode})
 
 
@@ -150,6 +155,7 @@ class RegisterAPIView(APIView):
     '''
     用户注册
     '''
+    @app_data_required('username', 'email', 'password', 'ecode')
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         data = request.data
@@ -161,7 +167,8 @@ class RegisterAPIView(APIView):
             return Response({'code': 40002, 'detail': u'邮箱已存在'})
         password = data.get('password')
         ecode = data.get('ecode')
-        origin_ecode = request.session.get('ecode')
+        ec = EmailEcode.objects.filter(email=email).first()
+        origin_ecode = ec.ecode if ec else ''
         if ecode != origin_ecode:
             return Response({'code': 40002, 'detail': u'邮箱验证码错误'})
         user = User.objects.create_user(username, email, password)

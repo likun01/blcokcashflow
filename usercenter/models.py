@@ -135,3 +135,10 @@ class DeivceVcode(models.Model):
         _(u'device'), max_length=64, db_index=True)
     vcode = models.CharField(
         _(u'vcode'), max_length=64)
+
+
+class EmailEcode(models.Model):
+    email = models.EmailField(
+        _(u'email'), db_index=True)
+    ecode = models.CharField(
+        _(u'ecode'), max_length=64)
