@@ -1,0 +1,4 @@
+yum install mysql-devel
+yum install python-devel
+sudo yum install zlib-devel
+sudo yum install libjpeg-turbo-devel

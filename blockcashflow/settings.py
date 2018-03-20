@@ -126,6 +126,10 @@ SITE_ID = 1
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS = (
+    get_abs('static'),
+)
+
 AUTH_USER_MODEL = 'usercenter.User'
 
 LOGGING = {
