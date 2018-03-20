@@ -216,7 +216,7 @@ class MemberPaymentAPIView(APIView):
         end_date = start_date + datetime.timedelta(days=ms.duration)
 
         price = round(float(ms.price) / bitpay_rates.get_usd_rate(), 8)
-        notificationURL = '{0}/api/user/payment/callback/'.format(
+        notificationURL = '{0}/api/users/payment/callback/'.format(
             Site.objects.get_current(request).domain)
         order_id = '{0}{1}'.format(int(time.time()), random_number(4))
 
