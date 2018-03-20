@@ -23,8 +23,8 @@ class MemberServiceAdmin(admin.ModelAdmin):
 
 @admin.register(MemberOrder)
 class MemberOrderAdmin(admin.ModelAdmin):
-    list_display = ('order_id', 'invoice_id', 'user', 'service', 'start_date', 'end_date', 'coin_type', 'coin_amount', 'url',
-                    'status', 'exception_status')
+    list_display = ('order_id', 'invoice_id', 'user', 'service', 'created_datetime', 'start_date', 'end_date', 'coin_type', 'coin_amount', 'url',
+                    'status', 'exception_status', 'modified_datetime')
     list_filter = ('status', 'exception_status', 'coin_type')
     search_fields = ('user__username', 'user__email',
                      'order_id', 'guid', 'invoice_id',)

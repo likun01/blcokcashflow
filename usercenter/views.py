@@ -216,7 +216,7 @@ class MemberPaymentAPIView(APIView):
         end_date = start_date + datetime.timedelta(days=ms.duration)
 
         price = round(float(ms.price) / bitpay_rates.get_usd_rate(), 8)
-        notificationURL = '{0}/user/payment/callback/'.format(
+        notificationURL = '{0}/api/user/payment/callback/'.format(
             Site.objects.get_current(request).domain)
         order_id = '{0}{1}'.format(int(time.time()), random_number(4))
 
@@ -231,6 +231,7 @@ class MemberPaymentAPIView(APIView):
 
         order = MemberOrder.objects.create(order_id=order_id, user=user, service=ms, guid=data.get('guid', ''), url=data.get('url'), start_date=start_date, end_date=end_date, coin_type=ms.coin_type, coin_amount=price, status=data.get(
             'status'), exception_status=data.get('exceptionStatus'), invoice_id=data.get('id'), addresses=data.get('addresses'), origin=data)
+        debug('payment_data', data)
         return Response({'invoice_id': order.invoice_id, 'url': data.get('url')})
 
 
