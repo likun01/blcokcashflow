@@ -1,0 +1,21 @@
+Host *
+  IdentityFile ~/.ssh/id_rsa
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+  LogLevel ERROR
+  User likun
+
+Host x1
+  HostName 101.200.177.85
+
+Host x2
+  HostName 123.57.38.154
+
+Host search
+  HostName 123.56.241.204
+
+Host test
+  HostName 123.57.210.68
+
+Host pro
+  HostName 47.95.36.224
