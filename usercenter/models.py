@@ -128,3 +128,10 @@ class SubscribeSetting(StatusMixin, TimestampMixin):
     class Meta:
         verbose_name = _(u'订阅设置')
         verbose_name_plural = _(u'订阅设置')
+
+
+class DeivceVcode(models.Model):
+    device = models.CharField(
+        _(u'device'), max_length=64, db_index=True)
+    vcode = models.CharField(
+        _(u'vcode'), max_length=64)

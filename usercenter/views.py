@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from django.db import transaction
 from django.db.models import Q
 from usercenter.models import User, MemberService, MemberOrder,\
-    MemberOrderNotificationRecord, SubscribeSetting, Subscribe
+    MemberOrderNotificationRecord, SubscribeSetting, Subscribe, DeivceVcode
 from django.contrib.auth import authenticate, login
 
 from common.utils import random_number, md5, debug
@@ -18,7 +18,8 @@ from django.http.response import HttpResponse
 from django.core.mail import send_mail
 from rest_framework.generics import ListAPIView
 from bitpay.bitpay_client import Client
-from common.rest_utils import app_login_required, app_user
+from common.rest_utils import app_login_required, app_user, app_device,\
+    app_data_required
 from django.contrib.sites.models import Site
 import time
 from django.utils.timezone import now
@@ -30,14 +31,19 @@ class LoginAPIView(APIView):
     '''
     登陆
     '''
+    app_data_required('username', 'password', 'vcode')
+
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         data = request.data
         username = data.get('username')
         password = data.get('password')
         vcode = upper(data.get('vcode', ''))
-        origin_vcode = upper(request.session.get('vcode', ''))
-        print vcode, origin_vcode
+        device = app_device(request)
+        if not device:
+            device = username
+        dv = DeivceVcode.objects.filter(device=device).first()
+        origin_vcode = dv.vcode if dv else ''
         if vcode == origin_vcode:
             try:
                 user = User.objects.get(
@@ -56,15 +62,20 @@ class LoginAPIView(APIView):
         return Response({'code': 40001, 'detail': u'验证码错误'})
 
 
-class LoginVcodeView(TemplateView):
+class LoginVcodeView(APIView):
     '''
     生成图片验证码
     '''
 
     def get(self, request, *args, **kwargs):
+        data = request.query_params.copy()
+        device = app_device(request)
+        if not device:
+            device = data.get('username', '')
         f = BytesIO()
         img, code = check_code.create_validate_code()
-        request.session['vcode'] = code
+        DeivceVcode.objects.update_or_create(
+            device=device, defaults={'vcode': upper(code)})
         img.save(f, 'GIF')
         return HttpResponse(f.getvalue(), content_type='image/gif')
 
@@ -115,7 +126,11 @@ class LoginCheckVcodeAPIView(APIView):
     def get(self, request, *args, **kwargs):
         data = request.query_params.copy()
         vcode = upper(data.get('vcode', ''))
-        origin_vcode = upper(request.session.get('vcode', ''))
+        device = app_device(request)
+        if not device:
+            device = data.get('username')
+        dv = DeivceVcode.objects.filter(device=device).first()
+        origin_vcode = dv.vcode if dv else ''
         return Response({'valid': vcode == origin_vcode})
 
 
@@ -301,3 +316,9 @@ class SubscribeListAPIView(ListAPIView):
         user = app_user(self.request)
         qs = Subscribe.objects.filter(user=user)
         return qs
+
+
+class IosPayCheck(APIView):
+
+    def get(self, request, *args, **kwargs):
+        return Response({'show': settings.IOS_PAY_SHOW})

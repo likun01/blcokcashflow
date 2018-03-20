@@ -9,7 +9,8 @@ from django.conf.urls import url
 from usercenter.views import LoginAPIView, RegisterAPIView, LoginVcodeView, LoginEcodeAPIView, \
     LoginCheckUsernameAPIView, LoginCheckEmailAPIView, LoginCheckVcodeAPIView, LoginCheckEcodeAPIView,\
     MemberServiceListAPIView, MemberOrderListAPIView, MemberPaymentAPIView,\
-    SubscribeSettingAPIView, SubscribeListAPIView, MemberPaymentCallbackAPIView
+    SubscribeSettingAPIView, SubscribeListAPIView, MemberPaymentCallbackAPIView,\
+    IosPayCheck
 
 urlpatterns = [
     url('^login/$', LoginAPIView.as_view(), name='user_login'),
@@ -30,4 +31,6 @@ urlpatterns = [
         name='user_subscribe_setting'),
     url('^subscribe/list/$', SubscribeListAPIView.as_view(),
         name='user_subscribe_list'),
+    url('^pay_check/$', IosPayCheck.as_view(),
+        name='user_pay_check'),
 ]
