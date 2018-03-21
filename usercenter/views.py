@@ -12,7 +12,6 @@ from django.conf import settings
 from rest_framework.response import Response
 from usercenter.serializers import UserSerializer, MemberServiceSerializer,\
     MemberOrderSerializer, SubscribeSettingSerializer, SubscribeSerializer
-from django.views.generic.base import TemplateView
 from _io import BytesIO
 from common import check_code, bitpay_rates
 from django.http.response import HttpResponse
@@ -280,7 +279,8 @@ class MemberPaymentCallbackAPIView(APIView):
         client = Client(api_uri=settings.BITPAY_API_URL)
         invoice_data = client.get_invoice(invoice_id)
         debug('notification_url_invoice_data', invoice_data)
-        if invoice_data.get('status') == 'confirmed' or invoice_data.get('status') == 'complete':
+        if invoice_data.get('status') == 'confirmed':  # 确认等级中
+            #         if invoice_data.get('status') == 'complete'#确认等级慢
             user.is_member = True
             user.member_last_date = order.end_date
             user.save()

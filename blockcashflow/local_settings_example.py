@@ -26,7 +26,14 @@ DATABASES = {
         'USER': 'xs_test_user',
         'PASSWORD': 'AAaa1231'
     },
-
+    'ltc': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'ltc_db',
+        'HOST': 'rm-2ze2ytva34g5604dho.mysql.rds.aliyuncs.com',
+        'PORT': 3306,
+        'USER': 'xs_test_user',
+        'PASSWORD': 'AAaa1231'
+    },
 }
 SITE_REDIS_TIMEOUT = 6
 
@@ -49,3 +56,5 @@ VrnCEbAUZOfBHdvfog+2oEDHyrbCAg==
 -----END EC PRIVATE KEY-----
 '''
 BITPAY_TOKEN = 'AKANEv6RBiK69xGp2heFz8dHSPGxT4z8eSUNT6R24j2P'
+
+IOS_PAY_SHOW = True

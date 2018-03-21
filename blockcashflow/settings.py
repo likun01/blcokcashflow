@@ -71,6 +71,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'common.middleware.NodeAPIRedirectMiddleware',
 )
 
 CORS_ALLOW_CREDENTIALS = True
@@ -236,3 +237,5 @@ VrnCEbAUZOfBHdvfog+2oEDHyrbCAg==
 BITPAY_TOKEN = 'AKANEv6RBiK69xGp2heFz8dHSPGxT4z8eSUNT6R24j2P'
 
 IOS_PAY_SHOW = True
+
+NODE_SERVER = 'http://127.0.0.1:5000'
