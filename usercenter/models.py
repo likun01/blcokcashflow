@@ -7,9 +7,9 @@ import jsonfield
 
 
 class User(AbstractUser):
-    is_member = models.BooleanField(_(u'是否会员'), default=False)
+    is_member = models.BooleanField(_(u'是否会员'), default=False, db_index=True)
     member_last_date = models.DateField(
-        _(u'会员到期'), null=True, blank=True)
+        _(u'会员到期'), null=True, blank=True, db_index=True)
     token = models.CharField(_(u'token'), max_length=64, db_index=True)
 
     class Meta:

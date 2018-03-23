@@ -24,7 +24,7 @@ def debug(token, info, error=False):
 
 def avg(iterator):
     if iterator:
-        return sum(iterator) / (len(iterator) * 1.0)
+        return float(sum(iterator)) / (len(iterator) * 1.0)
     return 0
 
 
@@ -63,7 +63,7 @@ def md5(s):
 
 
 def datetime2timestamp(dt):
-    if isinstance(dt, datetime.datetime):
+    if isinstance(dt, (datetime.datetime, datetime.date)):
         return long(time.mktime(dt.timetuple()))
     return dt
 

@@ -58,7 +58,9 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'rest_framework',
+    'common',
     'usercenter',
+    'investment',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -220,11 +222,25 @@ SUIT_CONFIG = {
     'MENU': (
         'sites',
         {'app': 'usercenter', 'label': _(u'用户中心'), 'icon': 'icon-star'},
-
+        {'app': 'investment', 'label': _(u'智能预测'), 'icon': 'icon-star'},
         {'label': _(u'系统用户设置'), 'icon': 'icon-cog',
          'models': ('auth.group',)},
     )
 }
+
+# djcelery+broker配置
+BROKER_URL = 'redis://:redis7890@127.0.0.1:6379/1'
+CELERY_RESULT_BACKEND = 'redis://:redis7890@127.0.0.1:6379/1'
+REDIS_CONNECT_RETRY = True
+CELERY_TASK_RESULT_EXPIRES = 10
+import djcelery
+djcelery.setup_loader()
+
+SOUTH_MIGRATION_MODULES = {
+    'djcelery': 'djcelery.south_migrations',
+}
+
+CELERY_TIMEZONE = TIME_ZONE
 
 BITPAY_API_URL = 'https://test.bitpay.com'
 BITPAY_KEY = '''
