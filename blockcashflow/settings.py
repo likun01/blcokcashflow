@@ -58,6 +58,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'debug_toolbar',
+    'djcelery',
     'rest_framework',
     'common',
     'usercenter',
@@ -242,6 +243,7 @@ SUIT_CONFIG = {
         'sites',
         {'app': 'usercenter', 'label': _(u'用户中心'), 'icon': 'icon-star'},
         {'app': 'investment', 'label': _(u'智能预测'), 'icon': 'icon-star'},
+        {'app': 'djcelery', 'label': _(u'定时任务'), 'icon': 'icon-bell'},
         {'label': _(u'系统用户设置'), 'icon': 'icon-cog',
          'models': ('auth.group',)},
     )

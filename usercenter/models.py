@@ -86,6 +86,7 @@ class MemberOrder(TimestampMixin):
     class Meta:
         verbose_name = _(u'购买订单')
         verbose_name_plural = _(u'购买订单')
+        ordering = ('-created_datetime',)
 
     def __unicode__(self):
         return self.order_id

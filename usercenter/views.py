@@ -234,7 +234,11 @@ class MemberOrderListAPIView(ListAPIView):
 
     def get_queryset(self):
         user = self.request.app_user
+        data = self.request.query_params.copy()
+        status = data.get('status', '')
         qs = MemberOrder.objects.filter(user=user)
+        if status:
+            qs = qs.filter(status=status)
         return qs
 
     @app_login_required
