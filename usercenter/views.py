@@ -204,6 +204,17 @@ class ChangePasswordAPIView(APIView):
         return Response(UserSerializer(user).data)
 
 
+class MemberStatusAPIView(APIView):
+    '''
+    获取会员状态
+    '''
+
+    @app_login_required
+    def get(self, request, *args, **kwargs):
+        user = self.request.app_user
+        return Response({'is_member': user.is_member, 'member_last_date': user.member_last_date})
+
+
 class MemberServiceListAPIView(APIView):
     '''
     获取会员服务价格列表

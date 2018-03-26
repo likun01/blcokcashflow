@@ -10,7 +10,7 @@ from usercenter.views import LoginAPIView, RegisterAPIView, LoginVcodeView, Logi
     LoginCheckUsernameAPIView, LoginCheckEmailAPIView, LoginCheckVcodeAPIView, LoginCheckEcodeAPIView,\
     MemberServiceListAPIView, MemberOrderListAPIView, MemberPaymentAPIView,\
     SubscribeSettingAPIView, SubscribeListAPIView, MemberPaymentCallbackAPIView,\
-    IosPayCheck, ChangePasswordAPIView
+    IosPayCheck, ChangePasswordAPIView, MemberStatusAPIView
 
 urlpatterns = [
     url('^login/$', LoginAPIView.as_view(), name='user_login'),
@@ -23,6 +23,7 @@ urlpatterns = [
     url('^check/email/$', LoginCheckEmailAPIView.as_view(), name='user_check_email'),
     url('^check/vcode/$', LoginCheckVcodeAPIView.as_view(), name='user_check_vcode'),
     url('^check/ecode/$', LoginCheckEcodeAPIView.as_view(), name='user_check_ecode'),
+    url('^check/status/$', MemberStatusAPIView.as_view(), name='user_check_status'),
     url('^register/$', RegisterAPIView.as_view(), name='user_register'),
     url('^member/$', MemberServiceListAPIView.as_view(), name='user_member_list'),
     url('^order/$', MemberOrderListAPIView.as_view(), name='user_order_list'),
