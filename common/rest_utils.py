@@ -57,6 +57,10 @@ def login_required_response():
     return Response({'code': 40003, 'detail': u'需要登录'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
+def member_required_response():
+    return Response({'code': 40003, 'detail': u'需要购买会员'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
 def data_bad_response():
     return Response(REST_RES_ERROR, status=status.HTTP_400_BAD_REQUEST)
 
@@ -123,13 +127,36 @@ def app_login_required(func):
     '''
 
     @wraps(func)
-    def wrapper(view, request, *args, **kwargs):
+    def wrapper(view, request, *wargs, **wkwargs):
         token = app_token(request)
         if token:
             try:
                 user = User.objects.get(token=token)
                 request.app_user = user
-                return func(view, request, * args, **kwargs)
+                return func(view, request, * wargs, **wkwargs)
+            except User.DoesNotExist:
+                pass
+        return login_required_response()
+
+    return wrapper
+
+
+def app_member_required(func):
+    '''
+    X-APP-TOKEN
+    X-APP-DEVICEID
+    '''
+
+    @wraps(func)
+    def wrapper(view, request, *wargs, **wkwargs):
+        token = app_token(request)
+        if token:
+            try:
+                user = User.objects.get(token=token)
+                if not user.is_member:
+                    return member_required_response()
+                request.app_user = user
+                return func(view, request, * wargs, **wkwargs)
             except User.DoesNotExist:
                 pass
         return login_required_response()

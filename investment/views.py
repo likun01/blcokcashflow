@@ -2,8 +2,8 @@
 from rest_framework.response import Response
 from django.utils.timezone import now
 
-from common.rest_utils import app_user, app_login_required, app_data_required,\
-    data_bad_response
+from common.rest_utils import app_user, app_data_required,\
+    data_bad_response, app_member_required
 
 import datetime
 from rest_framework.views import APIView
@@ -49,7 +49,7 @@ class PositionWarningSubscribeAPIView(APIView):
     持仓预警订阅
     status :1: 订阅 0: 取消
     '''
-    @app_login_required
+    @app_member_required
     def post(self, request, *args, **kwargs):
         user = request.app_user
         data = request.data
@@ -132,7 +132,7 @@ class TransactionWarningSubscribeAPIView(APIView):
     地址交易预警订阅
     status :1: 订阅 0: 取消
     '''
-    @app_login_required
+    @app_member_required
     @app_data_required('pk')
     def post(self, request, *args, **kwargs):
         user = request.app_user

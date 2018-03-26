@@ -80,7 +80,7 @@ class BitDatelist(models.Model):
 
 
 class BitErrorblocklist(models.Model):
-    id = models.BigIntegerField()
+    id = models.BigIntegerField(primary_key=True)
     blockhash = models.CharField(max_length=64, blank=True, null=True)
     next_blockhash = models.CharField(max_length=64, blank=True, null=True)
     previous_blockhash = models.CharField(max_length=64, blank=True, null=True)

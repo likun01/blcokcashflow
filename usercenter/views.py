@@ -19,7 +19,7 @@ from django.core.mail import send_mail
 from rest_framework.generics import ListAPIView
 from bitpay.bitpay_client import Client
 from common.rest_utils import app_login_required, app_user, app_device,\
-    app_data_required
+    app_data_required, app_member_required
 from django.contrib.sites.models import Site
 import time
 from django.utils.timezone import now
@@ -179,6 +179,30 @@ class RegisterAPIView(APIView):
         return Response(UserSerializer(user).data)
 
 
+class ChangePasswordAPIView(APIView):
+    '''
+    修改密码
+    '''
+    @app_login_required
+    @app_data_required('old_password', 'new_password', )
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        user = request.app_user
+        data = request.data
+        old_password = data.get('old_password')
+        if not user.check_password(old_password):
+            return Response({'code': 40001, 'detail': u'原密码错误'})
+
+        new_password = data.get('new_password')
+        user.set_password(new_password)
+        user.token = md5(
+            '{0}{1}{2}'.format(user.username, random_number(6), settings.SECRET_KEY))
+        user.save()
+        user = authenticate(username=user.username, password=new_password)
+        login(request, user)
+        return Response(UserSerializer(user).data)
+
+
 class MemberServiceListAPIView(APIView):
     '''
     获取会员服务价格列表
@@ -294,13 +318,13 @@ class SubscribeSettingAPIView(APIView):
 
     serializer_class = SubscribeSettingSerializer
 
-    @app_login_required
+    @app_member_required
     def get(self, request, *args, **kwargs):
         user = request.app_user
         ssg, _ = SubscribeSetting.objects.get_or_create(user=user)
         return Response(self.serializer_class(ssg).data)
 
-    @app_login_required
+    @app_member_required
     def post(self, request, *args, **kwargs):
         user = request.app_user
         ssg, _ = SubscribeSetting.objects.get_or_create(user=user)
