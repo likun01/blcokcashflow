@@ -1,6 +1,7 @@
 # coding: utf-8
 from rest_framework.views import APIView
 from django.db import transaction
+from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from usercenter.models import User, MemberService, MemberOrder,\
     MemberOrderNotificationRecord, SubscribeSetting, Subscribe, DeivceVcode,\
@@ -56,10 +57,10 @@ class LoginAPIView(APIView):
                     login(request, user)
                     return Response(UserSerializer(user).data)
                 else:
-                    return Response({'code': 40001, 'detail': u'密码错误'})
+                    return Response({'code': 40001, 'detail': _(u'密码错误')})
             except User.DoesNotExist:
-                return Response({'code': 40001, 'detail': u'用户名不存在'})
-        return Response({'code': 40001, 'detail': u'验证码错误'})
+                return Response({'code': 40001, 'detail': _(u'用户名不存在')})
+        return Response({'code': 40001, 'detail': _(u'验证码错误')})
 
 
 class LoginVcodeView(APIView):
@@ -94,7 +95,7 @@ class LoginEcodeAPIView(APIView):
         message = u'【BCF】您的邮件验证码为：{0}'.format(ecode)
         send_mail(u'邮件验证码', message, settings.SERVER_EMAIL,
                   [email, ], html_message=message)
-        return Response({'code': 0, 'detail': u'邮件发送成功'})
+        return Response({'code': 0, 'detail': _(u'邮件发送成功')})
 
 
 class LoginCheckUsernameAPIView(APIView):
@@ -160,16 +161,16 @@ class RegisterAPIView(APIView):
         data = request.data
         username = data.get('username')
         if User.objects.filter(username=username).exists():
-            return Response({'code': 40002, 'detail': u'用户名已存在'})
+            return Response({'code': 40002, 'detail': _(u'用户名已存在')})
         email = data.get('email')
         if User.objects.filter(email=email).exists():
-            return Response({'code': 40002, 'detail': u'邮箱已存在'})
+            return Response({'code': 40002, 'detail': _(u'邮箱已存在')})
         password = data.get('password')
         ecode = data.get('ecode')
         ec = EmailEcode.objects.filter(email=email).first()
         origin_ecode = ec.ecode if ec else ''
         if ecode != origin_ecode:
-            return Response({'code': 40002, 'detail': u'邮箱验证码错误'})
+            return Response({'code': 40002, 'detail': _(u'邮箱验证码错误')})
         user = User.objects.create_user(username, email, password)
         user.token = md5(
             '{0}{1}{2}'.format(username, random_number(6), settings.SECRET_KEY))
@@ -191,7 +192,7 @@ class ChangePasswordAPIView(APIView):
         data = request.data
         old_password = data.get('old_password')
         if not user.check_password(old_password):
-            return Response({'code': 40001, 'detail': u'原密码错误'})
+            return Response({'code': 40001, 'detail': _(u'原密码错误')})
 
         new_password = data.get('new_password')
         user.set_password(new_password)

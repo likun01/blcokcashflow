@@ -1,5 +1,6 @@
 # coding: utf-8
 from rest_framework.response import Response
+from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
 
 from common.rest_utils import app_user, app_data_required,\
@@ -56,7 +57,7 @@ class PositionWarningSubscribeAPIView(APIView):
         status = data.get('status', '1')
         PositionSubscribe.objects.update_or_create(
             user=user, defaults={'status': status})
-        return Response({'code': 0, 'detail': u'订阅成功' if status == '1' else u'取消成功'})
+        return Response({'code': 0, 'detail': _(u'订阅成功') if status == '1' else _(u'取消成功')})
 
 
 class TransactionAPIView(APIView):
@@ -148,7 +149,7 @@ class TransactionWarningSubscribeAPIView(APIView):
             address = m.objects.using('ltc').get(pk=pk).address
             TransactionSubscribe.objects.update_or_create(
                 user=user, address=address, defaults={'status': status})
-            return Response({'code': 0, 'detail': u'订阅成功' if status == '1' else u'取消成功'})
+            return Response({'code': 0, 'detail': _(u'订阅成功') if status == '1' else _(u'取消成功')})
         except m.DoesNotExist:
             return data_bad_response()
 
@@ -185,4 +186,14 @@ class ExchangeAPIView(APIView):
                                datetime2timestamp(x.his_date)), filter(lambda x: x.address_type == 2, qs))
         m_bar = map(lambda x: (x.in_amount - x.out_amount,
                                datetime2timestamp(x.his_date)), filter(lambda x: x.address_type == 3, qs))
-        return Response({'in_line': in_line, 'out_line': out_line, 'l_in': l_in, 'l_out': l_out, 'm_in': m_in, 'm_out': m_out, 's_in': s_in, 's_out': s_out, 'l_bar': l_bar, 's_bar': s_bar, 'm_bar': m_bar})
+        return Response({'in_line': {'data': in_line, 'name': _(u'总流入')},
+                         'out_line': {'data': out_line, 'name': _(u'总流出')},
+                         'l_in': {'data': l_in, 'name': _(u'大户流入')},
+                         'l_out': {'data': l_out, 'name': _(u'大户流出')},
+                         'm_in': {'data': m_in, 'name': _(u'中户流入')},
+                         'm_out': {'data': m_out, 'name': _(u'中户流出')},
+                         's_in': {'data': s_in, 'name': _(u'小户流入')},
+                         's_out': {'data': s_out, 'name': _(u'小户流出')},
+                         'l_bar': {'data': l_bar, 'name': _(u'大户净流入')},
+                         's_bar': {'data': s_bar, 'name': _(u'小户净流入')},
+                         'm_bar': {'data': m_bar, 'name': _(u'中户净流入')}})
