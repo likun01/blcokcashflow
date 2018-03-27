@@ -9,7 +9,7 @@ from common.rest_utils import app_user, app_data_required,\
 import datetime
 from rest_framework.views import APIView
 from investment.models import PositionSubscribe, TransactionSubscribe
-from common.utils import datetime2timestamp, avg
+from common.utils import datetime2microsecond, avg
 from common.models_blockchain import LitecoinChartsDatas
 from common.models_ltc_db import IndexHis, TLiteSpecialAddress, LitecoinCashflowOutputWinneranalyst, LitecoinCashflowOutputWinneranalystBuyandsell,\
     LiteStockCashflow
@@ -25,7 +25,7 @@ class QuotationListAPIView(APIView):
         hq = LitecoinChartsDatas.objects.using('bc').order_by('hisdate')
         if not (user and user.is_member):
             hq = hq.filter(hisdate__lt=now() - datetime.timedelta(days=7))
-        data = map(lambda x: (datetime2timestamp(x.hisdate), x.price
+        data = map(lambda x: (datetime2microsecond(x.hisdate), x.price
                               ), hq)
         return Response({'data': data})
 
@@ -40,7 +40,7 @@ class PositionListAPIView(APIView):
         qs = IndexHis.objects.using('ltc').order_by('his_date')
         if not (user and user.is_member):
             qs = qs.filter(his_date__lt=now() - datetime.timedelta(days=7))
-        data = map(lambda x: (datetime2timestamp(x.his_date), x.index_value
+        data = map(lambda x: (datetime2microsecond(x.his_date), x.index_value
                               ), qs)
         return Response({'data': data})
 
@@ -109,7 +109,7 @@ class TransactionAPIView(APIView):
                 profit = '{:.2%}'.format((sell_price - buy_price) / buy_price)
                 address = '{0}{1}'.format(
                     b.address[:4], (len(b.address) - 4) * '*')
-                sell_arr.append({'id': 'sell_{}'.format(sell.id), 'address': address, 'block_time': datetime2timestamp(sell.block_time), 'buy_price': buy_price,
+                sell_arr.append({'id': 'sell_{}'.format(sell.id), 'address': address, 'block_time': datetime2microsecond(sell.block_time), 'buy_price': buy_price,
                                  'sell_price': sell_price, 'profit': profit})
                 points.update({'sell': sell_arr})
 
@@ -118,7 +118,7 @@ class TransactionAPIView(APIView):
                     map(lambda x: x.get('sell_price'), sell_arr))
                 profit_avg = '{:.2%}'.format(
                     (sell_price_avg - buy_price) / buy_price)
-                buy.update({'id': 'buy_{}'.format(b.id), 'address': address, 'block_time': datetime2timestamp(b.block_time), 'buy_price': buy_price,
+                buy.update({'id': 'buy_{}'.format(b.id), 'address': address, 'block_time': datetime2microsecond(b.block_time), 'buy_price': buy_price,
                             'sell_price': sell_price_avg, 'profit': profit_avg})
                 points.update({'buy': buy})
 
@@ -169,15 +169,15 @@ class ExchangeAPIView(APIView):
 
         data = {}
         map(lambda x: data.update(
-            {datetime2timestamp(x.hisdate): x.price}), hq)
+            {datetime2microsecond(x.hisdate): x.price}), hq)
 
         def in_amount(x):
-            ts = datetime2timestamp(x.his_date)
+            ts = datetime2microsecond(x.his_date)
             price = data.get(ts) * float(x.in_amount) if data.get(ts) else '-'
             return (ts,  x.in_amount, price)
 
         def out_amount(x):
-            ts = datetime2timestamp(x.his_date)
+            ts = datetime2microsecond(x.his_date)
             price = data.get(ts) * float(x.out_amount) if data.get(ts) else '-'
             return (ts,  x.out_amount, price)
 
@@ -204,7 +204,7 @@ class ExchangeAPIView(APIView):
         out_line = map(lambda x: line_data(x), zip(l_out, m_out, s_out))
 
         def bar_data(x):
-            ts = datetime2timestamp(x.his_date)
+            ts = datetime2microsecond(x.his_date)
             amount = float(x.in_amount - x.out_amount)
             price = data.get(ts) * amount if data.get(ts) else '-'
             return (ts, amount, price)

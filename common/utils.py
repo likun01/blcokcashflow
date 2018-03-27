@@ -72,6 +72,8 @@ def datetime2microsecond(dt):
     if isinstance(dt, datetime.datetime):
         seconds = long(time.mktime(dt.timetuple()))
         return long(seconds * 1000 + dt.microsecond / 1000)
+    if isinstance(dt, datetime.date):
+        return long(time.mktime(dt.timetuple())) * 1000
     return dt
 
 
