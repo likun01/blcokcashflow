@@ -269,6 +269,8 @@ class MemberPaymentAPIView(APIView):
         mspk = data.get('mspk')
         ms = MemberService.objects.get(pk=mspk)
 
+        if MemberOrder.objects.filter(user=user, status__in=('new', 'paid'), created_datetime__gt=now() - datetime.timedelta(seconds=15 * 60)).exists():
+            return Response({'code': 40009, 'detail': _(u'未支付订单等待处理')})
         last_date = user.member_last_date
         if last_date and now().date() <= last_date:
             start_date = last_date + datetime.timedelta(days=1)

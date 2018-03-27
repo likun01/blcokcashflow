@@ -29,7 +29,7 @@ class MemberOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = MemberOrder
         fields = ('order_id', 'name', 'start_date', 'end_date',
-                  'created_datetime', 'coin_type', 'coin_amount', 'status')
+                  'created_datetime', 'coin_type', 'coin_amount', 'status', 'url', 'invoice_id')
 
     def get_name(self, obj):
         return obj.service.name
