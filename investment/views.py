@@ -25,8 +25,8 @@ class QuotationListAPIView(APIView):
         hq = LitecoinChartsDatas.objects.using('bc').order_by('hisdate')
         if not (user and user.is_member):
             hq = hq.filter(hisdate__lt=now() - datetime.timedelta(days=7))
-        data = map(lambda x: (x.price,
-                              datetime2timestamp(x.hisdate)), hq)
+        data = map(lambda x: (datetime2timestamp(x.hisdate), x.price
+                              ), hq)
         return Response({'data': data})
 
 
@@ -40,8 +40,8 @@ class PositionListAPIView(APIView):
         qs = IndexHis.objects.using('ltc').order_by('his_date')
         if not (user and user.is_member):
             qs = qs.filter(his_date__lt=now() - datetime.timedelta(days=7))
-        data = map(lambda x: (x.index_value,
-                              datetime2timestamp(x.his_date)), qs)
+        data = map(lambda x: (datetime2timestamp(x.his_date), x.index_value
+                              ), qs)
         return Response({'data': data})
 
 
@@ -162,30 +162,60 @@ class ExchangeAPIView(APIView):
     def get(self, request, *args, **kwargs):
         user = app_user(request)
         qs = LiteStockCashflow.objects.using('ltc').all()
+        hq = LitecoinChartsDatas.objects.using('bc').order_by('hisdate')
         if not (user and user.is_member):
             qs = qs.filter(his_date__lt=now() - datetime.timedelta(days=7))
-        l_in = map(lambda x: (x.in_amount, datetime2timestamp(
-            x.his_date)), filter(lambda x: x.address_type == 1, qs))
-        l_out = map(lambda x: (x.out_amount, datetime2timestamp(
-            x.his_date)), filter(lambda x: x.address_type == 1, qs))
-        m_in = map(lambda x: (x.in_amount, datetime2timestamp(
-            x.his_date)), filter(lambda x: x.address_type == 2, qs))
-        m_out = map(lambda x: (x.out_amount, datetime2timestamp(
-            x.his_date)), filter(lambda x: x.address_type == 2, qs))
-        s_in = map(lambda x: (x.in_amount, datetime2timestamp(
-            x.his_date)), filter(lambda x: x.address_type == 3, qs))
-        s_out = map(lambda x: (x.out_amount, datetime2timestamp(
-            x.his_date)), filter(lambda x: x.address_type == 3, qs))
-        in_line = map(lambda x: (
-            sum([x[0][0], x[1][0], x[2][0]]), x[0][1]), zip(l_in, m_in, s_in))
-        out_line = map(lambda x: (
-            sum([x[0][0], x[1][0], x[2][0]]), x[0][1]), zip(l_out, m_out, s_out))
-        l_bar = map(lambda x: (x.in_amount - x.out_amount,
-                               datetime2timestamp(x.his_date)), filter(lambda x: x.address_type == 1, qs))
-        s_bar = map(lambda x: (x.in_amount - x.out_amount,
-                               datetime2timestamp(x.his_date)), filter(lambda x: x.address_type == 2, qs))
-        m_bar = map(lambda x: (x.in_amount - x.out_amount,
-                               datetime2timestamp(x.his_date)), filter(lambda x: x.address_type == 3, qs))
+            hq = hq.filter(hisdate__lt=now() - datetime.timedelta(days=7))
+
+        data = {}
+        map(lambda x: data.update(
+            {datetime2timestamp(x.hisdate): x.price}), hq)
+
+        def in_amount(x):
+            ts = datetime2timestamp(x.his_date)
+            price = data.get(ts) * float(x.in_amount) if data.get(ts) else '-'
+            return (ts,  x.in_amount, price)
+
+        def out_amount(x):
+            ts = datetime2timestamp(x.his_date)
+            price = data.get(ts) * float(x.out_amount) if data.get(ts) else '-'
+            return (ts,  x.out_amount, price)
+
+        l_in = map(lambda x: in_amount(x), filter(
+            lambda x: x.address_type == 1, qs))
+        l_out = map(lambda x: out_amount(x), filter(
+            lambda x: x.address_type == 1, qs))
+        m_in = map(lambda x: in_amount(x), filter(
+            lambda x: x.address_type == 2, qs))
+        m_out = map(lambda x: out_amount(x), filter(
+            lambda x: x.address_type == 2, qs))
+        s_in = map(lambda x: in_amount(x), filter(
+            lambda x: x.address_type == 3, qs))
+        s_out = map(lambda x: out_amount(x), filter(
+            lambda x: x.address_type == 3, qs))
+
+        def line_data(x):
+            ts = x[0][0]
+            amount = float(sum([x[0][1], x[1][1], x[2][1]]))
+            price = data.get(ts) * amount if data.get(ts) else '-'
+            return (ts, amount, price)
+
+        in_line = map(lambda x: line_data(x), zip(l_in, m_in, s_in))
+        out_line = map(lambda x: line_data(x), zip(l_out, m_out, s_out))
+
+        def bar_data(x):
+            ts = datetime2timestamp(x.his_date)
+            amount = float(x.in_amount - x.out_amount)
+            price = data.get(ts) * amount if data.get(ts) else '-'
+            return (ts, amount, price)
+
+        l_bar = map(lambda x: bar_data(x), filter(
+            lambda x: x.address_type == 1, qs))
+        s_bar = map(lambda x: bar_data(x), filter(
+            lambda x: x.address_type == 2, qs))
+        m_bar = map(lambda x: bar_data(x), filter(
+            lambda x: x.address_type == 3, qs))
+
         return Response({'in_line': {'data': in_line, 'name': _(u'总流入')},
                          'out_line': {'data': out_line, 'name': _(u'总流出')},
                          'l_in': {'data': l_in, 'name': _(u'大户流入')},
