@@ -27,7 +27,7 @@ class QuotationListAPIView(APIView):
             hq = hq.filter(hisdate__lt=now() - datetime.timedelta(days=7))
         data = map(lambda x: (datetime2microsecond(x.hisdate), x.price
                               ), hq)
-        return Response({'data': data})
+        return Response({'data': data, 'start': data[0][0], 'end': data[-1][0]})
 
 
 class PositionListAPIView(APIView):
@@ -42,7 +42,7 @@ class PositionListAPIView(APIView):
             qs = qs.filter(his_date__lt=now() - datetime.timedelta(days=7))
         data = map(lambda x: (datetime2microsecond(x.his_date), x.index_value
                               ), qs)
-        return Response({'data': data})
+        return Response({'data': data, 'start': data[0][0], 'end': data[-1][0]})
 
 
 class PositionWarningSubscribeAPIView(APIView):
@@ -83,13 +83,24 @@ class TransactionAPIView(APIView):
             buy_qs = buy_qs.filter(
                 block_time__lt=now() - datetime.timedelta(days=7))
         buy_data = {}
+        start = datetime2microsecond(now())
+        end = 0
         for buy in buy_qs:
+            if datetime2microsecond(buy.block_time) > end:
+                end = datetime2microsecond(buy.block_time)
+            if datetime2microsecond(buy.block_time) < start:
+                start = datetime2microsecond(buy.block_time)
             _arr = buy_data.get(buy.address, [])
             _arr.append(buy)
             buy_data.update({buy.address: _arr})
 
         buy_sell = {}
         for sell in sell_qs:
+            if datetime2microsecond(sell.block_time) > end:
+                end = datetime2microsecond(sell.block_time)
+            if datetime2microsecond(sell.block_time) < start:
+                start = datetime2microsecond(sell.block_time)
+
             _arr = buy_data.get(sell.address, [])
             trans = abs(sell.output_value - sell.input_value)
             b = None
@@ -125,7 +136,7 @@ class TransactionAPIView(APIView):
                 buy_sell.update(
                     {'{}{}'.format(b.address, b.block_time): points})
 
-        return Response({'data': buy_sell.values()})
+        return Response({'data': buy_sell.values(), 'start': start, 'end': end})
 
 
 class TransactionWarningSubscribeAPIView(APIView):
@@ -161,11 +172,15 @@ class ExchangeAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         user = app_user(request)
-        qs = LiteStockCashflow.objects.using('ltc').all()
+        qs = LiteStockCashflow.objects.using('ltc').order_by('his_date')
         hq = LitecoinChartsDatas.objects.using('bc').order_by('hisdate')
         if not (user and user.is_member):
             qs = qs.filter(his_date__lt=now() - datetime.timedelta(days=7))
             hq = hq.filter(hisdate__lt=now() - datetime.timedelta(days=7))
+
+        qs = list(qs)
+        start = datetime2microsecond(qs[0].his_date)
+        end = datetime2microsecond(qs[-1].his_date)
 
         data = {}
         map(lambda x: data.update(
@@ -226,4 +241,5 @@ class ExchangeAPIView(APIView):
                          's_out': {'data': s_out, 'name': _(u'小户流出')},
                          'l_bar': {'data': l_bar, 'name': _(u'大户净流入')},
                          's_bar': {'data': s_bar, 'name': _(u'小户净流入')},
-                         'm_bar': {'data': m_bar, 'name': _(u'中户净流入')}})
+                         'm_bar': {'data': m_bar, 'name': _(u'中户净流入')},
+                         'start': start, 'end': end})
