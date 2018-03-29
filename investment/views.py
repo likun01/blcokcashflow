@@ -25,7 +25,7 @@ class QuotationListAPIView(APIView):
         hq = LitecoinChartsDatas.objects.using('bc').order_by('hisdate')
         if not (user and user.is_member):
             hq = hq.filter(hisdate__lt=now() - datetime.timedelta(days=7))
-        data = map(lambda x: (datetime2microsecond(x.hisdate), x.price
+        data = map(lambda x: (datetime2microsecond(x.hisdate), x.price_usd
                               ), hq)
         return Response({'data': data, 'start': data[0][0], 'end': data[-1][0]})
 
@@ -184,7 +184,7 @@ class ExchangeAPIView(APIView):
 
         data = {}
         map(lambda x: data.update(
-            {datetime2microsecond(x.hisdate): x.price}), hq)
+            {datetime2microsecond(x.hisdate): x.price_usd}), hq)
 
         def in_amount(x):
             ts = datetime2microsecond(x.his_date)
@@ -226,10 +226,13 @@ class ExchangeAPIView(APIView):
 
         l_bar = map(bar_data, filter(
             lambda x: x.address_type == 1, qs))
-        s_bar = map(bar_data, filter(
-            lambda x: x.address_type == 2, qs))
         m_bar = map(bar_data, filter(
+            lambda x: x.address_type == 2, qs))
+        s_bar = map(bar_data, filter(
             lambda x: x.address_type == 3, qs))
+
+        bar_line = map(lambda x: (x[0][0], sum((x[0][1], x[1][1], x[2][1])), sum((
+            x[0][2], x[1][2], x[2][2]))), zip(l_bar, m_bar, s_bar))
 
         return Response({'in_line': {'data': in_line, 'name': _(u'总流入')},
                          'out_line': {'data': out_line, 'name': _(u'总流出')},
@@ -242,4 +245,5 @@ class ExchangeAPIView(APIView):
                          'l_bar': {'data': l_bar, 'name': _(u'大户净流入')},
                          's_bar': {'data': s_bar, 'name': _(u'小户净流入')},
                          'm_bar': {'data': m_bar, 'name': _(u'中户净流入')},
+                         'bar_line': {'data': bar_line, 'name': _(u'净流入')},
                          'start': start, 'end': end})

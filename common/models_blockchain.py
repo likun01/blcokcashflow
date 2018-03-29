@@ -490,7 +490,8 @@ class ChangeAddressList(models.Model):
 
 class LitecoinChartsDatas(models.Model):
     id = models.BigIntegerField(primary_key=True)
-    price = models.FloatField(blank=True, null=True)
+    price_usd = models.FloatField(blank=True, null=True)
+    price_btc = models.FloatField(blank=True, null=True)
     hisdate = models.DateField(unique=True, blank=True, null=True)
     create_time = models.DateTimeField(blank=True, null=True)
 

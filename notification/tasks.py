@@ -15,6 +15,8 @@ from common.decorators import debug_time
 from common.utils import debug
 from notification.push import PushSdk
 from investment.models import PositionWarning, TransactionWarning
+from common.models_ltc_db import IndexHis
+from usercenter.models import Subscribe
 
 
 @task
@@ -119,3 +121,25 @@ def push_notification():
     if ids:
         for ntf in Notification.objects.filter(id__in=ids):
             ntf.push()
+
+
+@task
+@debug_time
+def position_monitor():
+    '''
+    持仓数据监控
+    '''
+    THRESHOLD = 0.05
+    qs = IndexHis.objects.using('ltc').order_by('-his_date')[:2]
+    today = qs[0].index_value
+    yesterday = qs[1].index_value
+    percent = (today - yesterday) / yesterday
+    change = 'up' if percent > 0 else 'down'
+    if abs(percent) >= THRESHOLD:
+        warn = []
+        users = Subscribe.objects.filter(category='position', status=1)
+        for user in users:
+            warn.append(PositionWarning(
+                user=user, change=change, percent=percent))
+
+        PositionWarning.objects.bulk_create(warn)
