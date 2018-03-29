@@ -46,4 +46,4 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subscribe
-        fields = '__all__'
+        fields = ('pk', 'category', 'created_datetime')

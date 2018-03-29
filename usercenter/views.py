@@ -366,6 +366,24 @@ class SubscribeListAPIView(ListAPIView):
         qs = Subscribe.objects.filter(user=user)
         return qs
 
+    @app_member_required
+    def get(self, request, *args, **kwargs):
+        return super(SubscribeListAPIView, self).get(request, *args, **kwargs)
+
+
+class SubscribeCancelAPIView(APIView):
+    '''
+    订阅取消
+    '''
+
+    @app_member_required
+    @app_data_required('pk')
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        pk = data.get('pk')
+        Subscribe.objects.filter(pk=pk).update(status=0)
+        return Response({'code': 0, 'detail':  _(u'取消成功')})
+
 
 class IosPayCheck(APIView):
 

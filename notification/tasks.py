@@ -16,7 +16,8 @@ from common.utils import debug
 from notification.push import PushSdk
 from investment.models import PositionWarning, TransactionWarning
 from common.models_ltc_db import IndexHis
-from usercenter.models import Subscribe
+from usercenter.models import Subscribe, SubscribeSetting
+from django.utils.timezone import now
 
 
 @task
@@ -28,6 +29,8 @@ def position_warning_notification():
     year = datetime.datetime.now().year
     month = datetime.datetime.now().month
     day = datetime.datetime.now().day
+    SubscribeSetting.objects.filter(
+        start_time__gt=now().time(), end_time__lt=now().time())
 
     qs = PositionWarning.objects.filter(
         created_datetime__year=year, created_datetime__month=month, created_datetime__day=day, pushed=False)
