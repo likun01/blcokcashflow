@@ -60,6 +60,10 @@ ORDER_EXCEPTION_STATUS_CHOICES = (
     ('paidOver', 'paidOver'),
     ('paidLate', 'paidLate'),
 )
+SUBSCRIBE_CATEGORY_CHOICES = (
+    ('position', _(u'持仓订阅')),
+    ('transaction', _(u'交易订阅')),
+)
 
 
 class MemberOrder(TimestampMixin):
@@ -113,6 +117,10 @@ class MemberOrderNotificationRecord(TimestampMixin):
 
 class Subscribe(StatusMixin, TimestampMixin):
     user = models.ForeignKey(User, verbose_name=_(u'用户'))
+    address = models.CharField(
+        max_length=64, db_index=True, null=True, blank=True)
+    category = models.CharField(
+        _(u'订阅类型'), max_length=32, choices=SUBSCRIBE_CATEGORY_CHOICES, default='position')
 
     class Meta:
         verbose_name = _(u'订阅列表')

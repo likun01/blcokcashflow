@@ -224,3 +224,29 @@ class UnquotePageNumberPagination(PageNumberPagination):
 
 class SmallPageNumberPagination(PageNumberPagination):
     page_size = 50
+
+
+def build_urlscheme(message_type, type_id='', type_link='', quote=False):
+    if type_id:
+        type_id = type_id.strip()
+    if type_link:
+        type_link = type_link.strip()
+    if message_type == 'article':
+        return '{0}mainpage/{1}/{2}/'.format(settings.URLSCHEME, message_type, type_id)
+    if message_type == 'bigv':
+        return '{0}{1}/{2}/'.format(settings.URLSCHEME, message_type, type_id)
+    if message_type == 'topic':
+        return '{0}find/{1}/{2}/'.format(settings.URLSCHEME, message_type, type_id)
+    if message_type in ['recommend', 'prediction']:
+        return '{0}find/{1}/'.format(settings.URLSCHEME, message_type)
+    if message_type in ['webview', 'browser']:
+        if quote:
+            type_link = urllib.quote(type_link, '')
+        return '{0}{1}/?url={2}'.format(settings.URLSCHEME, message_type, type_link)
+    if message_type == 'app':
+        return '{0}mainpage/'.format(settings.URLSCHEME)
+    if message_type == 'validate':
+        return '{0}mine/{1}/'.format(settings.URLSCHEME, message_type)
+    if message_type == 'message':
+        return '{0}{1}/usermessage/'.format(settings.URLSCHEME, message_type)
+    return '{0}{1}/'.format(settings.URLSCHEME, message_type)

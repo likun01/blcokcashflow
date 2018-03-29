@@ -63,10 +63,12 @@ INSTALLED_APPS = (
     'common',
     'usercenter',
     'investment',
+    'notification',
 )
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -276,3 +278,10 @@ BITPAY_TOKEN = 'AKANEv6RBiK69xGp2heFz8dHSPGxT4z8eSUNT6R24j2P'
 IOS_PAY_SHOW = True
 
 NODE_SERVER = 'http://127.0.0.1:5000'
+
+URLSCHEME = 'blockcashflow://app/'
+
+ALI_ACCESSKEYID = ''
+ALI_ACCESSKEYSECRET = ''
+ALI_REGIONID = ''
+ALI_APPKEY = ''

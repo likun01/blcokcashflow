@@ -1,19 +1,19 @@
 # coding: utf-8
 from django.contrib import admin
-from investment.models import PositionSubscribe, TransactionSubscribe
+from investment.models import PositionWarning, TransactionWarning
 
 
-@admin.register(PositionSubscribe)
-class PositionSubscribeAdmin(admin.ModelAdmin):
-    list_display = ('user', 'created_datetime', 'modified_datetime',
-                    'status')
-    list_filter = ('status',)
+@admin.register(PositionWarning)
+class PositionWarningAdmin(admin.ModelAdmin):
+    list_display = ('user', 'change', 'percent',
+                    'created_datetime', 'modified_datetime',)
+#     list_filter = ('status',)
     search_fields = ('user__username', 'user__email',)
 
 
-@admin.register(TransactionSubscribe)
-class TransactionSubscribeAdmin(admin.ModelAdmin):
-    list_display = ('user', 'address', 'created_datetime', 'modified_datetime',
-                    'status')
-    list_filter = ('status',)
+@admin.register(TransactionWarning)
+class TransactionWarningAdmin(admin.ModelAdmin):
+    list_display = ('user', 'address', 'amount',
+                    'created_datetime', 'modified_datetime')
+#     list_filter = ('status',)
     search_fields = ('user__username', 'user__email',)

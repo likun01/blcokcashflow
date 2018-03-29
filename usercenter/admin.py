@@ -1,7 +1,7 @@
 # coding: utf-8
 from django.contrib import admin
 from usercenter.models import User, MemberService, MemberOrder,\
-    MemberOrderNotificationRecord, SubscribeSetting
+    MemberOrderNotificationRecord, SubscribeSetting, Subscribe
 
 
 @admin.register(User)
@@ -44,6 +44,14 @@ class MemberOrderNotificationRecordAdmin(admin.ModelAdmin):
 @admin.register(SubscribeSetting)
 class SubscribeSettingAdmin(admin.ModelAdmin):
     list_display = ('user', 'start_time', 'end_time',
+                    'status')
+    list_filter = ('status',)
+    search_fields = ('user__username', 'user__email',)
+
+
+@admin.register(Subscribe)
+class SubscribeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'address', 'created_datetime', 'modified_datetime',
                     'status')
     list_filter = ('status',)
     search_fields = ('user__username', 'user__email',)

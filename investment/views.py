@@ -8,11 +8,11 @@ from common.rest_utils import app_user, app_data_required,\
 
 import datetime
 from rest_framework.views import APIView
-from investment.models import PositionSubscribe, TransactionSubscribe
 from common.utils import datetime2microsecond, avg
 from common.models_blockchain import LitecoinChartsDatas
 from common.models_ltc_db import IndexHis, TLiteSpecialAddress, LitecoinCashflowOutputWinneranalyst, LitecoinCashflowOutputWinneranalystBuyandsell,\
     LiteStockCashflow
+from usercenter.models import Subscribe
 
 
 class QuotationListAPIView(APIView):
@@ -55,8 +55,8 @@ class PositionWarningSubscribeAPIView(APIView):
         user = request.app_user
         data = request.data
         status = data.get('status', '1')
-        PositionSubscribe.objects.update_or_create(
-            user=user, defaults={'status': status})
+        Subscribe.objects.update_or_create(category='position',
+                                           user=user, defaults={'status': status})
         return Response({'code': 0, 'detail': _(u'订阅成功') if status == '1' else _(u'取消成功')})
 
 
@@ -158,8 +158,8 @@ class TransactionWarningSubscribeAPIView(APIView):
             m = LitecoinCashflowOutputWinneranalyst
         try:
             address = m.objects.using('ltc').get(pk=pk).address
-            TransactionSubscribe.objects.update_or_create(
-                user=user, address=address, defaults={'status': status})
+            Subscribe.objects.update_or_create(category='transaction',
+                                               user=user, address=address, defaults={'status': status})
             return Response({'code': 0, 'detail': _(u'订阅成功') if status == '1' else _(u'取消成功')})
         except m.DoesNotExist:
             return data_bad_response()
@@ -196,17 +196,17 @@ class ExchangeAPIView(APIView):
             price = data.get(ts) * float(x.out_amount) if data.get(ts) else '-'
             return (ts,  x.out_amount, price)
 
-        l_in = map(lambda x: in_amount(x), filter(
+        l_in = map(in_amount, filter(
             lambda x: x.address_type == 1, qs))
-        l_out = map(lambda x: out_amount(x), filter(
+        l_out = map(out_amount, filter(
             lambda x: x.address_type == 1, qs))
-        m_in = map(lambda x: in_amount(x), filter(
+        m_in = map(in_amount, filter(
             lambda x: x.address_type == 2, qs))
-        m_out = map(lambda x: out_amount(x), filter(
+        m_out = map(out_amount, filter(
             lambda x: x.address_type == 2, qs))
-        s_in = map(lambda x: in_amount(x), filter(
+        s_in = map(in_amount, filter(
             lambda x: x.address_type == 3, qs))
-        s_out = map(lambda x: out_amount(x), filter(
+        s_out = map(out_amount, filter(
             lambda x: x.address_type == 3, qs))
 
         def line_data(x):
@@ -215,8 +215,8 @@ class ExchangeAPIView(APIView):
             price = data.get(ts) * amount if data.get(ts) else '-'
             return (ts, amount, price)
 
-        in_line = map(lambda x: line_data(x), zip(l_in, m_in, s_in))
-        out_line = map(lambda x: line_data(x), zip(l_out, m_out, s_out))
+        in_line = map(line_data, zip(l_in, m_in, s_in))
+        out_line = map(line_data, zip(l_out, m_out, s_out))
 
         def bar_data(x):
             ts = datetime2microsecond(x.his_date)
@@ -224,11 +224,11 @@ class ExchangeAPIView(APIView):
             price = data.get(ts) * amount if data.get(ts) else '-'
             return (ts, amount, price)
 
-        l_bar = map(lambda x: bar_data(x), filter(
+        l_bar = map(bar_data, filter(
             lambda x: x.address_type == 1, qs))
-        s_bar = map(lambda x: bar_data(x), filter(
+        s_bar = map(bar_data, filter(
             lambda x: x.address_type == 2, qs))
-        m_bar = map(lambda x: bar_data(x), filter(
+        m_bar = map(bar_data, filter(
             lambda x: x.address_type == 3, qs))
 
         return Response({'in_line': {'data': in_line, 'name': _(u'总流入')},
