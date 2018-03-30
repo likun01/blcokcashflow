@@ -363,7 +363,7 @@ class SubscribeListAPIView(ListAPIView):
 
     def get_queryset(self):
         user = app_user(self.request)
-        qs = Subscribe.objects.filter(user=user)
+        qs = Subscribe.objects.filter(user=user, status=1)
         return qs
 
     @app_member_required
