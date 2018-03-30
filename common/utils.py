@@ -105,3 +105,9 @@ def number_human(value):
     elif value >= 10**4 or value <= -10**4:
         format_value = u'{0:.1f}万'.format(value / 10000.0)
     return format_value
+
+
+def hide_address(address):
+    if address:
+        return '{0}{1}'.format(address[:4], (len(address) - 4) * '*')
+    return ''

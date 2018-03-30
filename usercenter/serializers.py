@@ -7,6 +7,7 @@ Created on 2018年3月15日
 from rest_framework import serializers
 from usercenter.models import User, MemberService, MemberOrder, SubscribeSetting,\
     Subscribe
+from common.utils import hide_address
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -43,7 +44,11 @@ class SubscribeSettingSerializer(serializers.ModelSerializer):
 
 
 class SubscribeSerializer(serializers.ModelSerializer):
+    address = serializers.SerializerMethodField()
 
     class Meta:
         model = Subscribe
-        fields = ('pk', 'category', 'created_datetime')
+        fields = ('pk', 'category', 'address', 'created_datetime')
+
+    def get_address(self, obj):
+        return hide_address(obj.address)

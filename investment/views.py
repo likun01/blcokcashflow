@@ -8,7 +8,7 @@ from common.rest_utils import app_user, app_data_required,\
 
 import datetime
 from rest_framework.views import APIView
-from common.utils import datetime2microsecond, avg
+from common.utils import datetime2microsecond, avg, hide_address
 from common.models_blockchain import LitecoinChartsDatas
 from common.models_ltc_db import IndexHis, TLiteSpecialAddress, LitecoinCashflowOutputWinneranalyst, LitecoinCashflowOutputWinneranalystBuyandsell,\
     LiteStockCashflow
@@ -118,8 +118,7 @@ class TransactionAPIView(APIView):
                 sell_price = float(sell.trans_volume_doller /
                                    (sell.output_value - sell.input_value))
                 profit = '{:.2%}'.format((sell_price - buy_price) / buy_price)
-                address = '{0}{1}'.format(
-                    b.address[:4], (len(b.address) - 4) * '*')
+                address = hide_address(b.address)
                 sell_arr.append({'id': 'sell_{}'.format(sell.id), 'address': address, 'block_time': datetime2microsecond(sell.block_time), 'buy_price': buy_price,
                                  'sell_price': sell_price, 'profit': profit})
                 points.update({'sell': sell_arr})
