@@ -8,7 +8,7 @@ Created on 2018年3月22日
 from django.conf.urls import url
 from investment.views import PositionListAPIView,\
     PositionWarningSubscribeAPIView, TransactionAPIView, QuotationListAPIView,\
-    TransactionWarningSubscribeAPIView, ExchangeAPIView
+    TransactionWarningSubscribeAPIView, ExchangeAPIView, ExchangeAVGAPIView
 
 urlpatterns = [
     url('^quotation/$', QuotationListAPIView.as_view(), name='quotation_charts'),
@@ -21,4 +21,6 @@ urlpatterns = [
         name='transaction_subscribe'),
     url('^exchange/$', ExchangeAPIView.as_view(),
         name='exchange_charts'),
+    url('^exchange/avg/$', ExchangeAVGAPIView.as_view(),
+        name='exchange_charts_avg'),
 ]

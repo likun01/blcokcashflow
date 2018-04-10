@@ -29,6 +29,7 @@ class MemberOrderAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'user__email',
                      'order_id', 'guid', 'invoice_id',)
     date_hierarchy = 'created_datetime'
+    raw_id_fields = ('user',)
 
 
 @admin.register(MemberOrderNotificationRecord)
@@ -39,6 +40,7 @@ class MemberOrderNotificationRecordAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'user__email',
                      'order__order_id', 'invoice_id',)
     date_hierarchy = 'created_datetime'
+    raw_id_fields = ('user', 'order')
 
 
 @admin.register(SubscribeSetting)
@@ -47,6 +49,7 @@ class SubscribeSettingAdmin(admin.ModelAdmin):
                     'status')
     list_filter = ('status',)
     search_fields = ('user__username', 'user__email',)
+    raw_id_fields = ('user',)
 
 
 @admin.register(Subscribe)
@@ -55,3 +58,4 @@ class SubscribeAdmin(admin.ModelAdmin):
                     'status')
     list_filter = ('status', 'category',)
     search_fields = ('user__username', 'user__email',)
+    raw_id_fields = ('user',)

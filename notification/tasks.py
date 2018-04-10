@@ -29,14 +29,17 @@ def position_warning_notification():
     year = datetime.datetime.now().year
     month = datetime.datetime.now().month
     day = datetime.datetime.now().day
-    SubscribeSetting.objects.filter(
-        start_time__gt=now().time(), end_time__lt=now().time())
-
-    qs = PositionWarning.objects.filter(
-        created_datetime__year=year, created_datetime__month=month, created_datetime__day=day, pushed=False)
+    ssuser = []
+    for ss in SubscribeSetting.objects.filter(status=1):
+        if (ss.start_time > ss.end_time and ss.start_time > now().time() and ss.end_time < now().time())\
+                or (ss.start_time < ss.end_time and (ss.start_time > now().time() or ss.end_time < now().time())):
+            ssuser.append(ss.user.pk)
+    print ssuser
+    qs = PositionWarning.objects.filter(user__in=ssuser,
+                                        created_datetime__year=year, created_datetime__month=month, created_datetime__day=day, pushed=False)
     for obj in qs:
-        desc = _(u'持仓预警：仓位{}了{}%'.format(
-            obj.get_change_display(), obj.percent))
+        desc = _(u'持仓预警：仓位{}了{}%').format(
+            obj.get_change_display(), obj.percent)
         Notification.objects.create(receiver=obj.user, content_object=obj,
                                     desc=desc, push_status='done', push_datetime=datetime.datetime.now())
 
@@ -59,10 +62,10 @@ def position_warning_notification():
                     receiver_id=user.get('user'), content_object=obj, desc=desc,
                     ntf_type='push', push_required=True, push_status='done', push_datetime=datetime.datetime.now(), urlscheme=urlscheme))
             aliases = users[step:step + real_alias]
-            _, info = sdk.publish_to_alias_batch(
+            r, info = sdk.publish_to_alias_batch(
                 map(lambda x: str(x.get('user')), aliases), _(u'持仓预警'), desc, urlscheme)
             Notification.objects.bulk_create(push_notifications)
-            debug('position_warning_notification', info)
+            debug('position_warning_notification', (r, info))
         qs.update(pushed=True)
 
 
@@ -78,8 +81,8 @@ def transaction_warning_notification():
     qs = TransactionWarning.objects.filter(
         created_datetime__year=year, created_datetime__month=month, created_datetime__day=day, pushed=False)
     for obj in qs:
-        desc = _(u'交易预警：订阅地址{}有了新的交易,交易量{}'.format(
-            obj.address, obj.amount))
+        desc = _(u'交易预警：订阅地址{}有了新的交易,交易量{}').format(
+            obj.address, obj.amount)
         Notification.objects.create(receiver=obj.user, content_object=obj,
                                     desc=desc, push_status='done', push_datetime=datetime.datetime.now())
 
@@ -102,10 +105,10 @@ def transaction_warning_notification():
                     receiver_id=user.get('user'), content_object=obj, desc=desc,
                     ntf_type='push', push_required=True, push_status='done', push_datetime=datetime.datetime.now(), urlscheme=urlscheme))
             aliases = users[step:step + real_alias]
-            _, info = sdk.publish_to_alias_batch(
+            r, info = sdk.publish_to_alias_batch(
                 map(lambda x: str(x.get('user')), aliases), _(u'交易预警'), desc, urlscheme)
             Notification.objects.bulk_create(push_notifications)
-            debug('transaction_warning_notification', info)
+            debug('transaction_warning_notification', (r, info))
         qs.update(pushed=True)
 
 

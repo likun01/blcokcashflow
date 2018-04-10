@@ -9,6 +9,7 @@ class PositionWarningAdmin(admin.ModelAdmin):
                     'created_datetime', 'modified_datetime',)
 #     list_filter = ('status',)
     search_fields = ('user__username', 'user__email',)
+    raw_id_fields = ('user',)
 
 
 @admin.register(TransactionWarning)
@@ -17,3 +18,5 @@ class TransactionWarningAdmin(admin.ModelAdmin):
                     'created_datetime', 'modified_datetime')
 #     list_filter = ('status',)
     search_fields = ('user__username', 'user__email',)
+
+    raw_id_fields = ('user',)
