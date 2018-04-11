@@ -295,9 +295,9 @@ class ExchangeAVGAPIView(APIView):
         user = app_user(request)
 
         recharge_qs = LiteExchangeRecharge.objects.using(
-            'ltc').filter(groupind=1000000).order_by('trans_date')
+            'ltc-pro').filter(groupind=1000000).order_by('trans_date')
         withdraw_qs = LiteExchangeWithdraw.objects.using(
-            'ltc').filter(groupind=1000000).order_by('trans_date')
+            'ltc-pro').filter(groupind=1000000).order_by('trans_date')
         if not (user and user.is_member):
             recharge_qs = recharge_qs.filter(
                 trans_date__lt=now() - datetime.timedelta(days=8))

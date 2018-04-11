@@ -34,6 +34,22 @@ DATABASES = {
         'USER': 'xs_test_user',
         'PASSWORD': 'AAaa1231'
     },
+    'bc': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'blockchain_db',
+        'HOST': 'rm-2ze2ytva34g5604dho.mysql.rds.aliyuncs.com',
+        'PORT': 3306,
+        'USER': 'xs_test_user',
+        'PASSWORD': 'AAaa1231'
+    },
+    'ltc-pro': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'ltc_db',
+        'HOST': 'rm-2zej071rj83wi8i8ho.mysql.rds.aliyuncs.com',
+        'PORT': 3306,
+        'USER': 'licj',
+        'PASSWORD': 'AAaa0615'
+    },
 }
 SITE_REDIS_TIMEOUT = 6
 
