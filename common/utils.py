@@ -77,6 +77,12 @@ def datetime2microsecond(dt):
     return dt
 
 
+def microsecond2date(ts):
+    if isinstance(ts, int):
+        return datetime.datetime.fromtimestamp(ts / 1000.0).date()
+    return ts
+
+
 def buildqrcode(code):
     '''
     生成225x225二维码的base64

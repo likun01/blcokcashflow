@@ -8,7 +8,8 @@ from common.rest_utils import app_user, app_data_required,\
 
 import datetime
 from rest_framework.views import APIView
-from common.utils import datetime2microsecond, avg, hide_address
+from common.utils import datetime2microsecond, avg, hide_address,\
+    microsecond2date
 from common.models_blockchain import LitecoinChartsDatas
 from common.models_ltc_db import IndexHis, TLiteSpecialAddress, LitecoinCashflowOutputWinneranalyst, LitecoinCashflowOutputWinneranalystBuyandsell,\
     LiteStockCashflow, LiteExchangeRecharge, LiteExchangeWithdraw
@@ -20,7 +21,7 @@ MICROSECONDDAY = 86400000
 
 
 def get_date_range():
-    hq = LitecoinChartsDatas.objects.using('bc').order_by('hisdate')
+    hq = LitecoinChartsDatas.objects.using('ltc').order_by('hisdate')
     start = hq.first().hisdate
     end = hq.last().hisdate
     return datetime2microsecond(start), datetime2microsecond(end)
@@ -37,6 +38,11 @@ def fill_data(data):
         for day in range(data[-1][0] + MICROSECONDDAY, end, MICROSECONDDAY):
             data.append((day, None))
         data.append((end, None))
+
+    for i in range(0, len(data)):
+        if i < len(data) - 1 and data[i + 1][0] - data[i][0] != MICROSECONDDAY:
+            data.insert(i + 1, (data[i][0] + MICROSECONDDAY, 0))
+
     return start, end
 
 
@@ -47,7 +53,7 @@ class QuotationListAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         user = app_user(request)
-        hq = LitecoinChartsDatas.objects.using('bc').order_by('hisdate')
+        hq = LitecoinChartsDatas.objects.using('ltc').order_by('hisdate')
         if not (user and user.is_member):
             hq = hq.filter(hisdate__lt=now() - datetime.timedelta(days=8))
         data = map(lambda x: (datetime2microsecond(x.hisdate), x.price_usd
@@ -192,7 +198,7 @@ class ExchangeAPIView(APIView):
     def get(self, request, *args, **kwargs):
         user = app_user(request)
         qs = LiteStockCashflow.objects.using('ltc').order_by('his_date')
-        hq = LitecoinChartsDatas.objects.using('bc').order_by('hisdate')
+        hq = LitecoinChartsDatas.objects.using('ltc').order_by('hisdate')
         if not (user and user.is_member):
             qs = qs.filter(his_date__lt=now() - datetime.timedelta(days=8))
             hq = hq.filter(hisdate__lt=now() - datetime.timedelta(days=8))
@@ -303,7 +309,7 @@ class ExchangeAVGAPIView(APIView):
                 trans_date__lt=now() - datetime.timedelta(days=8))
             withdraw_qs = withdraw_qs.filter(
                 trans_date__lt=now() - datetime.timedelta(days=8))
-        print recharge_qs.count(), withdraw_qs.count()
+
         map(lambda x: data.update({str(datetime2microsecond(x.trans_date)): {'recharge': {'tot': x.tot_recharge, 'avg': x.avg_recharge}}}),
             recharge_qs)
 
