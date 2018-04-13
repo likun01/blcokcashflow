@@ -8,13 +8,13 @@ from common.rest_utils import app_user, app_data_required,\
 
 import datetime
 from rest_framework.views import APIView
-from common.utils import datetime2microsecond, avg, hide_address,\
-    microsecond2date
+from common.utils import datetime2microsecond, avg, hide_address
 from common.models_blockchain import LitecoinChartsDatas
 from common.models_ltc_db import IndexHis, TLiteSpecialAddress, LitecoinCashflowOutputWinneranalyst, LitecoinCashflowOutputWinneranalystBuyandsell,\
     LiteStockCashflow, LiteExchangeRecharge, LiteExchangeWithdraw
 from usercenter.models import Subscribe
 from collections import OrderedDict
+from django.db import connections
 
 
 MICROSECONDDAY = 86400000
@@ -104,48 +104,94 @@ class TransactionAPIView(APIView):
         user = app_user(request)
         data = request.query_params.copy()
         address_type = data.get('address_type', '1')
+
+        hq = LitecoinChartsDatas.objects.using('ltc').order_by('hisdate')
+        hq_data = {}
+        map(lambda x: hq_data.update(
+            {datetime2microsecond(x.hisdate): x.price_usd}), hq)
+
         qs = TLiteSpecialAddress.objects.using(
             'ltc').filter(address_type=address_type).only('address')
         addresses = map(lambda x: x.address, qs)
-        sell_qs = LitecoinCashflowOutputWinneranalystBuyandsell.objects.using(
-            'ltc').filter(address__in=addresses).only('address', 'output_value', 'input_value', 'block_time', 'trans_volume_doller').order_by('-block_time')
-        buy_qs = LitecoinCashflowOutputWinneranalyst.objects.using(
-            'ltc').filter(address__in=addresses).only('address', 'output_value', 'input_value', 'block_time', 'trans_volume_doller').order_by('-block_time')
+
+        sell_sql = '''
+            SELECT
+                address ,
+                block_time ,
+                input_value ,
+                output_value
+            FROM
+                ltc_db.litecoin_cashflow_output
+            WHERE
+                (output_value - input_value) <- 10
+            AND address IN %s
+            AND block_time < %s
+            ORDER BY
+                block_time DESC
+            
+        '''
+        buy_sql = '''
+            SELECT
+                address ,
+                block_time ,
+                input_value ,
+                output_value
+            FROM
+                ltc_db.litecoin_cashflow_output
+            WHERE
+                (output_value - input_value) > 0
+            AND address IN %s
+            AND block_time < %s
+            ORDER BY
+                block_time DESC
+        '''
+        end_date = now()
         if not (user and user.is_member):
-            sell_qs = sell_qs.filter(
-                block_time__lt=now() - datetime.timedelta(days=8))
-            buy_qs = buy_qs.filter(
-                block_time__lt=now() - datetime.timedelta(days=8))
+            end_date = now() - datetime.timedelta(days=8)
+        cursor = connections['ltc'].cursor()
+        cursor.execute(
+            sell_sql, [tuple(addresses), end_date])
+        sell_qs = cursor.fetchall()
+
+        cursor.execute(
+            buy_sql, [tuple(addresses), end_date])
+        buy_qs = cursor.fetchall()
+
         buy_data = {}
         start, end = get_date_range()
 
-        for buy in buy_qs:
-            _arr = buy_data.get(buy.address, [])
+        for address, block_time, input_value, output_value in buy_qs:
+            buy = {'address': address, 'block_time': block_time, 'input_value': input_value,
+                   'output_value': output_value, 'trans': abs(output_value - input_value)}
+            _arr = buy_data.get(address, [])
             _arr.append(buy)
-            buy_data.update({buy.address: _arr})
+            buy_data.update({address: _arr})
 
         buy_sell = {}
-        for sell in sell_qs:
+        for address, block_time, input_value, output_value in sell_qs:
+            trans = abs(output_value - input_value)
 
-            _arr = buy_data.get(sell.address, [])
-            trans = abs(sell.output_value - sell.input_value)
+            _arr = buy_data.get(address, [])
+
             b = None
             for x in _arr:
-                if x.block_time < sell.block_time and abs(
-                        x.output_value - x.input_value) > trans:
+                if x.get('block_time') < block_time and x.get('trans') > trans / 4:
                     b = x
                     break
             if b:
                 points = buy_sell.get('{}{}'.format(
-                    b.address, b.block_time), {})
+                    b.get('address'), b.get('block_time')), {})
                 sell_arr = points.get('sell', [])
-                buy_price = float(b.trans_volume_doller /
-                                  (b.output_value - b.input_value))
-                sell_price = float(sell.trans_volume_doller /
-                                   (sell.output_value - sell.input_value))
+
+                buy_price = hq_data.get(
+                    datetime2microsecond(b.get('block_time').date()))
+
+                sell_price = hq_data.get(
+                    datetime2microsecond(block_time.date()))
+
                 profit = '{:.2%}'.format((sell_price - buy_price) / buy_price)
-                address = hide_address(b.address)
-                sell_arr.append({'id': 'sell_{}'.format(sell.id), 'address': address, 'block_time': datetime2microsecond(sell.block_time), 'buy_price': buy_price,
+                address = hide_address(b.get('address'))
+                sell_arr.append({'id': b.get('address'), 'address': address, 'block_time': datetime2microsecond(block_time), 'buy_price': buy_price,
                                  'sell_price': sell_price, 'profit': profit})
                 points.update({'sell': sell_arr})
 
@@ -154,12 +200,12 @@ class TransactionAPIView(APIView):
                     map(lambda x: x.get('sell_price'), sell_arr))
                 profit_avg = '{:.2%}'.format(
                     (sell_price_avg - buy_price) / buy_price)
-                buy.update({'id': 'buy_{}'.format(b.id), 'address': address, 'block_time': datetime2microsecond(b.block_time), 'buy_price': buy_price,
+                buy.update({'id': b.get('address'), 'address': address, 'block_time': datetime2microsecond(b.get('block_time')), 'buy_price': buy_price,
                             'sell_price': sell_price_avg, 'profit': profit_avg})
                 points.update({'buy': buy})
 
                 buy_sell.update(
-                    {'{}{}'.format(b.address, b.block_time): points})
+                    {'{}{}'.format(b.get('address'), b.get('block_time')): points})
 
         return Response({'data': buy_sell.values(), 'start': start, 'end': end})
 
@@ -175,19 +221,11 @@ class TransactionWarningSubscribeAPIView(APIView):
         user = request.app_user
         data = request.data
         status = data.get('status', '1')
-        if '_' not in data.get('pk'):
-            return data_bad_response()
-        prefix, pk = data.get('pk').split('_')
-        m = LitecoinCashflowOutputWinneranalystBuyandsell
-        if prefix == 'buy':
-            m = LitecoinCashflowOutputWinneranalyst
-        try:
-            address = m.objects.using('ltc').get(pk=pk).address
-            Subscribe.objects.update_or_create(category='transaction',
-                                               user=user, address=address, defaults={'status': status})
-            return Response({'code': 0, 'detail': _(u'订阅成功') if status == '1' else _(u'取消成功')})
-        except m.DoesNotExist:
-            return data_bad_response()
+
+        address = data.get('pk')
+        Subscribe.objects.update_or_create(category='transaction',
+                                           user=user, address=address, defaults={'status': status})
+        return Response({'code': 0, 'detail': _(u'订阅成功') if status == '1' else _(u'取消成功')})
 
 
 class ExchangeAPIView(APIView):

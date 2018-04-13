@@ -288,6 +288,7 @@ class MemberPaymentAPIView(APIView):
 
 #         print client.create_token('merchant')
 #         token = client.tokens['merchant']
+#         print token
         token = settings.BITPAY_TOKEN
         data = client.create_invoice({"price": price, "currency": ms.coin_type, "transactionSpeed": "medium", "fullNotifications": "true", "notificationURL":
                                       notificationURL, "buyer": {"email": user.email}, "orderId": order_id, "token": token})
