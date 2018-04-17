@@ -3,14 +3,14 @@ from rest_framework.response import Response
 from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
 
-from common.rest_utils import app_user, app_data_required,\
-    data_bad_response, app_member_required
+from common.rest_utils import app_user, app_data_required, app_member_required,\
+    data_bad_response
 
 import datetime
 from rest_framework.views import APIView
 from common.utils import datetime2microsecond, avg, hide_address
 from common.models_blockchain import LitecoinChartsDatas
-from common.models_ltc_db import IndexHis, TLiteSpecialAddress, LitecoinCashflowOutputWinneranalyst, LitecoinCashflowOutputWinneranalystBuyandsell,\
+from common.models_ltc_db import IndexHis, TLiteSpecialAddress,\
     LiteStockCashflow, LiteExchangeRecharge, LiteExchangeWithdraw
 from usercenter.models import Subscribe
 from collections import OrderedDict
@@ -123,7 +123,7 @@ class TransactionAPIView(APIView):
             FROM
                 ltc_db.litecoin_cashflow_output
             WHERE
-                (output_value - input_value) <- 10
+                (output_value - input_value) < -10
             AND address IN %s
             AND block_time < %s
             ORDER BY
@@ -335,52 +335,55 @@ class ExchangeAVGAPIView(APIView):
     '''
 
     def get(self, request, *args, **kwargs):
+        get_data = request.query_params.copy()
+        groupind = int(get_data.get('groupind', '1000000'))
         data = OrderedDict()
         user = app_user(request)
 
         recharge_qs = LiteExchangeRecharge.objects.using(
-            'ltc').filter(groupind=1000000).order_by('trans_date')
+            'ltc').filter(groupind=groupind).order_by('trans_date')
         withdraw_qs = LiteExchangeWithdraw.objects.using(
-            'ltc').filter(groupind=1000000).order_by('trans_date')
+            'ltc').filter(groupind=groupind).order_by('trans_date')
         if not (user and user.is_member):
             recharge_qs = recharge_qs.filter(
                 trans_date__lt=now() - datetime.timedelta(days=8))
             withdraw_qs = withdraw_qs.filter(
                 trans_date__lt=now() - datetime.timedelta(days=8))
 
-        map(lambda x: data.update({str(datetime2microsecond(x.trans_date)): {'recharge': {'tot': x.tot_recharge, 'avg': x.avg_recharge}}}),
-            recharge_qs)
+        if recharge_qs:
+            map(lambda x: data.update({str(datetime2microsecond(x.trans_date)): {'recharge': {'tot': x.tot_recharge, 'avg': x.avg_recharge}}}),
+                recharge_qs)
 
-        for obj in withdraw_qs:
-            key = str(datetime2microsecond(obj.trans_date))
-            withdraw = data.get(key)
-            if withdraw:
-                withdraw.update(
-                    {'withdraw': {'tot': obj.tot_withdraw, 'avg': obj.avg_with_draw}})
+            for obj in withdraw_qs:
+                key = str(datetime2microsecond(obj.trans_date))
+                withdraw = data.get(key)
+                if withdraw:
+                    withdraw.update(
+                        {'withdraw': {'tot': obj.tot_withdraw, 'avg': obj.avg_with_draw}})
+            withdraw_line, recharge_line, in_bar, out_bar, net_bar = [], [], [], [], []
+            for day, v in data.items():
+                day = int(day)
+                withdraw = v.get('withdraw')
+                recharge = v.get('recharge')
+                if withdraw and recharge:
+                    withdraw_line.append((day, withdraw.get('avg')))
+                    recharge_line.append((day, recharge.get('avg')))
+                    inflow = recharge.get('tot')
+                    outflow = withdraw.get('tot')
+                    in_bar.append((day, inflow))
+                    out_bar.append((day, outflow))
+                    net_bar.append((day, inflow - outflow))
 
-        withdraw_line, recharge_line, in_bar, out_bar, net_bar = [], [], [], [], []
-        for day, v in data.items():
-            day = int(day)
-            withdraw = v.get('withdraw')
-            recharge = v.get('recharge')
-            if withdraw and recharge:
-                withdraw_line.append((day, withdraw.get('avg')))
-                recharge_line.append((day, recharge.get('avg')))
-                inflow = recharge.get('tot')
-                outflow = withdraw.get('tot')
-                in_bar.append((day, inflow))
-                out_bar.append((day, outflow))
-                net_bar.append((day, inflow - outflow))
+            start, end = fill_data(in_bar)
+            fill_data(out_bar)
+            fill_data(withdraw_line)
+            fill_data(recharge_line)
+            fill_data(net_bar)
 
-        start, end = fill_data(in_bar)
-        fill_data(out_bar)
-        fill_data(withdraw_line)
-        fill_data(recharge_line)
-        fill_data(net_bar)
-
-        return Response({'in_bar': {'data': in_bar, 'name': _(u'总流入')},
-                         'out_bar': {'data': out_bar, 'name': _(u'总流出')},
-                         'withdraw_line': {'data': withdraw_line, 'name': _(u'笔均提现')},
-                         'recharge_line': {'data': recharge_line, 'name': _(u'笔均充值')},
-                         'net_bar': {'data': net_bar, 'name': _(u'净流入')},
-                         'start': start, 'end': end})
+            return Response({'in_bar': {'data': in_bar, 'name': _(u'总流入')},
+                             'out_bar': {'data': out_bar, 'name': _(u'总流出')},
+                             'withdraw_line': {'data': withdraw_line, 'name': _(u'笔均提现')},
+                             'recharge_line': {'data': recharge_line, 'name': _(u'笔均充值')},
+                             'net_bar': {'data': net_bar, 'name': _(u'净流入')},
+                             'start': start, 'end': end})
+        return data_bad_response()

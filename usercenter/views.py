@@ -26,6 +26,7 @@ import time
 from django.utils.timezone import now
 import datetime
 from string import upper, lower
+from django.template.loader import render_to_string
 
 
 class LoginAPIView(APIView):
@@ -92,8 +93,8 @@ class LoginEcodeAPIView(APIView):
         ecode = random_number(4)
         EmailEcode.objects.update_or_create(
             email=email, defaults={'ecode': ecode})
-        message = u'【BCF】您的邮件验证码为：{0}'.format(ecode)
-        send_mail(u'邮件验证码', message, settings.SERVER_EMAIL,
+        message = render_to_string('users/email.html', {'ecode': ecode})
+        send_mail(u'邮件验证码 Verification Code', message, settings.SERVER_EMAIL,
                   [email, ], html_message=message)
         return Response({'code': 0, 'detail': _(u'邮件发送成功')})
 
