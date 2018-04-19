@@ -9,12 +9,12 @@ from django.contrib.contenttypes.fields import GenericForeignKey,\
 
 
 from common.modelUtils import TimestampMixin
-import datetime
 import uuid
 from common.rest_utils import build_urlscheme
 from common.utils import datetime2timestamp
 from notification.push import PushSdk
 from usercenter.models import User
+from django.utils.timezone import now
 
 NOTIFICATION_NTF_TYPE_CHOICES = (
     ('all', _(u'站内信+手机推送')),
@@ -100,7 +100,7 @@ class Notification(TimestampMixin):
             sdk = PushSdk()
             if self.receiver:
                 res, msgId = sdk.publish_to_alias(
-                    self.receiver.pk.hex, self.title, self.desc, self.urlscheme)
+                    str(self.receiver.pk), self.title, self.desc, self.urlscheme)
             elif self.content_type.model == 'usermessage':
                 topic = self.content_object.post_topic
                 res, msgId = sdk.publish(self.devicetype,
@@ -112,13 +112,13 @@ class Notification(TimestampMixin):
                 self.push_status = 'fail'
         else:
             self.push_status = 'done'
-        self.push_datetime = datetime.datetime.now()
+        self.push_datetime = now()
         self.save(update_fields=['message_id', 'push_datetime', 'push_status'])
 
 
 @receiver(post_save, sender=Notification)
 def push_notification(sender, instance=None, created=False, **kwargs):
-    if created and instance.push_datetime == None and instance.push_status == 'wait':
+    if created and instance.push_required and instance.push_datetime == None and instance.push_status == 'wait':
         instance.push()
 
 

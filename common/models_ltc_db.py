@@ -70,24 +70,6 @@ class IndexHisBak(models.Model):
         db_table = 'index_his_bak'
 
 
-class LiteBalanceTmp(models.Model):
-    balance = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    address = models.CharField(max_length=64, blank=True, null=True)
-    sum_in_volume = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    sum_out_volume = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    sum_in_count = models.IntegerField(blank=True, null=True)
-    sum_out_count = models.IntegerField(blank=True, null=True)
-    address_type = models.SmallIntegerField(blank=True, null=True)
-    last_transaction_datetime = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'lite_balance_tmp'
-
-
 class LiteExchangeRecharge(models.Model):
     groupind = models.IntegerField()
     trans_date = models.DateField(blank=True, null=True)
@@ -274,6 +256,18 @@ class LitecoinCashflowOutputWinneranalystCopy(models.Model):
     class Meta:
         managed = False
         db_table = 'litecoin_cashflow_output_winneranalyst_copy'
+
+
+class LitecoinChartsDatas(models.Model):
+    id = models.BigIntegerField(primary_key=True)
+    price_usd = models.FloatField(blank=True, null=True)
+    price_btc = models.FloatField(blank=True, null=True)
+    hisdate = models.DateField(unique=True, blank=True, null=True)
+    create_time = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'litecoin_charts_datas'
 
 
 class ProcRecord(models.Model):

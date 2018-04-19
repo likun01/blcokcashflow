@@ -64,6 +64,7 @@ INSTALLED_APPS = (
     'usercenter',
     'investment',
     'notification',
+    'blockchain_db',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -245,6 +246,7 @@ SUIT_CONFIG = {
         'sites',
         {'app': 'usercenter', 'label': _(u'用户中心'), 'icon': 'icon-star'},
         {'app': 'investment', 'label': _(u'智能预测'), 'icon': 'icon-star'},
+        {'app': 'notification', 'label': _(u'消息推送'), 'icon': 'icon-envelope'},
         {'app': 'djcelery', 'label': _(u'定时任务'), 'icon': 'icon-bell'},
         {'label': _(u'系统用户设置'), 'icon': 'icon-cog',
          'models': ('auth.group',)},
@@ -284,4 +286,4 @@ URLSCHEME = 'blockcashflow://app/'
 ALI_ACCESSKEYID = 'LTAIADUkOv5ReEKC'
 ALI_ACCESSKEYSECRET = 'NI0I6Gk7FzW1Bi0b1yIcQkCMqnBXya'
 ALI_REGIONID = 'cn-hangzhou'
-ALI_APPKEY = ''
+ALI_APPKEY = '24855419'

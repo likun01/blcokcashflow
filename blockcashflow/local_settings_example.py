@@ -34,7 +34,7 @@ DATABASES = {
         'USER': 'xs_test_user',
         'PASSWORD': 'AAaa1231'
     },
-    'bc': {
+    'btc': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'blockchain_db',
         'HOST': 'rm-2ze2ytva34g5604dho.mysql.rds.aliyuncs.com',

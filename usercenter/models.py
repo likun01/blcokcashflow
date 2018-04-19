@@ -119,8 +119,10 @@ class Subscribe(StatusMixin, TimestampMixin):
     user = models.ForeignKey(User, verbose_name=_(u'用户'))
     address = models.CharField(
         max_length=64, db_index=True, null=True, blank=True)
+    coin_type = models.CharField(
+        _(u'币种'), max_length=32, choices=COIN_TYPE_CHOICES, db_index=True, default='LTC')
     category = models.CharField(
-        _(u'订阅类型'), max_length=32, choices=SUBSCRIBE_CATEGORY_CHOICES, default='position')
+        _(u'订阅类型'), db_index=True, max_length=32, choices=SUBSCRIBE_CATEGORY_CHOICES, default='position')
 
     class Meta:
         verbose_name = _(u'订阅列表')

@@ -54,8 +54,8 @@ class SubscribeSettingAdmin(admin.ModelAdmin):
 
 @admin.register(Subscribe)
 class SubscribeAdmin(admin.ModelAdmin):
-    list_display = ('user', 'category', 'address', 'created_datetime', 'modified_datetime',
+    list_display = ('user', 'category', 'coin_type', 'address', 'created_datetime', 'modified_datetime',
                     'status')
-    list_filter = ('status', 'category',)
+    list_filter = ('status', 'category', 'coin_type',)
     search_fields = ('user__username', 'user__email',)
     raw_id_fields = ('user',)

@@ -9,12 +9,14 @@ from common.rest_utils import app_user, app_data_required, app_member_required,\
 import datetime
 from rest_framework.views import APIView
 from common.utils import datetime2microsecond, avg, hide_address
-from common.models_blockchain import LitecoinChartsDatas
 from common.models_ltc_db import IndexHis, TLiteSpecialAddress,\
-    LiteStockCashflow, LiteExchangeRecharge, LiteExchangeWithdraw
+    LiteStockCashflow, LiteExchangeRecharge, LiteExchangeWithdraw,\
+    LitecoinChartsDatas
 from usercenter.models import Subscribe
 from collections import OrderedDict
 from django.db import connections
+from blockchain_db.models import BitcoinChartsDatas, TBitSpecialAddress,\
+    BitExchangeRecharge, BitExchangeWithdraw
 
 
 MICROSECONDDAY = 86400000
@@ -52,12 +54,23 @@ class QuotationListAPIView(APIView):
     '''
 
     def get(self, request, *args, **kwargs):
+        data = request.query_params.copy()
+        coin = data.get('coin', 'LTC')
         user = app_user(request)
-        hq = LitecoinChartsDatas.objects.using('ltc').order_by('hisdate')
+        if coin == 'BTC':
+            hq = BitcoinChartsDatas.objects.using('btc').order_by('hisdate')
+        else:
+            hq = LitecoinChartsDatas.objects.using('ltc').order_by('hisdate')
+
         if not (user and user.is_member):
             hq = hq.filter(hisdate__lt=now() - datetime.timedelta(days=8))
-        data = map(lambda x: (datetime2microsecond(x.hisdate), x.price_usd
-                              ), hq)
+
+        if coin == 'BTC':
+            data = map(lambda x: (datetime2microsecond(
+                x.hisdate), x.price), hq)
+        else:
+            data = map(lambda x: (datetime2microsecond(
+                x.hisdate), x.price_usd), hq)
         start, end = fill_data(data)
         return Response({'data': data, 'start': start, 'end': end})
 
@@ -69,7 +82,13 @@ class PositionListAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         user = app_user(request)
-        qs = IndexHis.objects.using('ltc').order_by('his_date')
+        data = request.query_params.copy()
+        coin = data.get('coin', 'LTC')
+        if coin == 'BTC':
+            qs = IndexHis.objects.using('btc').order_by('his_date')
+        else:
+            qs = IndexHis.objects.using('ltc').order_by('his_date')
+
         if not (user and user.is_member):
             qs = qs.filter(his_date__lt=now() - datetime.timedelta(days=8))
         data = map(lambda x: (datetime2microsecond(x.his_date), x.index_value
@@ -89,8 +108,9 @@ class PositionWarningSubscribeAPIView(APIView):
         user = request.app_user
         data = request.data
         status = data.get('status', '1')
+        coin = data.get('coin', 'LTC')
         Subscribe.objects.update_or_create(category='position',
-                                           user=user, defaults={'status': status})
+                                           user=user, coin_type=coin, defaults={'status': status})
         return Response({'code': 0, 'detail': _(u'订阅成功') if status == '1' else _(u'取消成功')})
 
 
@@ -104,14 +124,26 @@ class TransactionAPIView(APIView):
         user = app_user(request)
         data = request.query_params.copy()
         address_type = data.get('address_type', '1')
-
-        hq = LitecoinChartsDatas.objects.using('ltc').order_by('hisdate')
+        coin = data.get('coin', 'LTC')
         hq_data = {}
-        map(lambda x: hq_data.update(
-            {datetime2microsecond(x.hisdate): x.price_usd}), hq)
 
-        qs = TLiteSpecialAddress.objects.using(
-            'ltc').filter(address_type=address_type).only('address')
+        if coin == 'BTC':
+            hq = BitcoinChartsDatas.objects.using('btc').order_by('hisdate')
+            qs = TBitSpecialAddress.objects.using(
+                'btc').filter(address_type=address_type).only('address')
+            table = 'blockchain_db.bitcoin_cashflow_output'
+            cursor = connections['btc'].cursor()
+            map(lambda x: hq_data.update(
+                {datetime2microsecond(x.hisdate): x.price}), hq)
+        else:
+            hq = LitecoinChartsDatas.objects.using('ltc').order_by('hisdate')
+            qs = TLiteSpecialAddress.objects.using(
+                'ltc').filter(address_type=address_type).only('address')
+            table = 'ltc_db.litecoin_cashflow_output'
+            cursor = connections['ltc'].cursor()
+            map(lambda x: hq_data.update(
+                {datetime2microsecond(x.hisdate): x.price_usd}), hq)
+
         addresses = map(lambda x: x.address, qs)
 
         sell_sql = '''
@@ -121,7 +153,7 @@ class TransactionAPIView(APIView):
                 input_value ,
                 output_value
             FROM
-                ltc_db.litecoin_cashflow_output
+                {0}
             WHERE
                 (output_value - input_value) < -10
             AND address IN %s
@@ -129,7 +161,7 @@ class TransactionAPIView(APIView):
             ORDER BY
                 block_time DESC
             
-        '''
+        '''.format(table)
         buy_sql = '''
             SELECT
                 address ,
@@ -137,18 +169,18 @@ class TransactionAPIView(APIView):
                 input_value ,
                 output_value
             FROM
-                ltc_db.litecoin_cashflow_output
+                {0}
             WHERE
                 (output_value - input_value) > 0
             AND address IN %s
             AND block_time < %s
             ORDER BY
                 block_time DESC
-        '''
+        '''.format(table)
         end_date = now()
         if not (user and user.is_member):
             end_date = now() - datetime.timedelta(days=8)
-        cursor = connections['ltc'].cursor()
+
         cursor.execute(
             sell_sql, [tuple(addresses), end_date])
         sell_qs = cursor.fetchall()
@@ -221,10 +253,11 @@ class TransactionWarningSubscribeAPIView(APIView):
         user = request.app_user
         data = request.data
         status = data.get('status', '1')
+        coin = data.get('coin', 'LTC')
 
         address = data.get('pk')
         Subscribe.objects.update_or_create(category='transaction',
-                                           user=user, address=address, defaults={'status': status})
+                                           user=user, address=address, coin_type=coin, defaults={'status': status})
         return Response({'code': 0, 'detail': _(u'订阅成功') if status == '1' else _(u'取消成功')})
 
 
@@ -337,13 +370,21 @@ class ExchangeAVGAPIView(APIView):
     def get(self, request, *args, **kwargs):
         get_data = request.query_params.copy()
         groupind = int(get_data.get('groupind', '1000000'))
+        coin = get_data.get('coin', 'LTC')
         data = OrderedDict()
         user = app_user(request)
 
-        recharge_qs = LiteExchangeRecharge.objects.using(
-            'ltc').filter(groupind=groupind).order_by('trans_date')
-        withdraw_qs = LiteExchangeWithdraw.objects.using(
-            'ltc').filter(groupind=groupind).order_by('trans_date')
+        if coin == 'BTC':
+            recharge_qs = BitExchangeRecharge.objects.using(
+                'btc').filter(groupind=groupind).order_by('trans_date')
+            withdraw_qs = BitExchangeWithdraw.objects.using(
+                'btc').filter(groupind=groupind).order_by('trans_date')
+        else:
+            recharge_qs = LiteExchangeRecharge.objects.using(
+                'ltc').filter(groupind=groupind).order_by('trans_date')
+            withdraw_qs = LiteExchangeWithdraw.objects.using(
+                'ltc').filter(groupind=groupind).order_by('trans_date')
+
         if not (user and user.is_member):
             recharge_qs = recharge_qs.filter(
                 trans_date__lt=now() - datetime.timedelta(days=8))
