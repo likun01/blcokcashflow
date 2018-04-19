@@ -61,6 +61,9 @@ class ALiYunSdk():
 
         # android配置
 
+        # 指定notificaitonchannel id
+        request.set_AndroidNotificationChannel("1")
+
         # 通知的提醒方式 "VIBRATE" : 震动 "SOUND" : 声音 "BOTH" : 声音和震动 NONE : 静音
         request.set_AndroidNotifyType("SOUND")
         # 通知栏自定义样式1-100
@@ -71,12 +74,12 @@ class ALiYunSdk():
 #         request.set_AndroidOpenUrl("www.aliyun.com")
         # 设定通知打开的activity，仅当AndroidOpenType="Activity"有效
         request.set_AndroidActivity(
-            "com.xinshui.xsapp.main.activity.MainActivity")
+            "com.blockcashflow.app.main.MainActivity")
         # Android通知声音
         request.set_AndroidMusic("default")
         # 设置该参数后启动小米托管弹窗功能, 此处指定通知点击后跳转的Activity（托管弹窗的前提条件：1. 集成小米辅助通道；2. StoreOffline参数设为true）
         request.set_AndroidXiaoMiActivity(
-            "com.xinshui.xsapp.main.activity.MiActivity")
+            "com.blockcashflow.app.main.MainActivity")
         # 设定通知的扩展属性。(注意 : 该参数要以 json map 的格式传入,否则会解析出错)
         request.set_AndroidExtParameters(json.dumps(extra_dict))
 

@@ -258,6 +258,7 @@ BROKER_URL = 'redis://:redis7890@127.0.0.1:6379/1'
 CELERY_RESULT_BACKEND = 'redis://:redis7890@127.0.0.1:6379/1'
 REDIS_CONNECT_RETRY = True
 CELERY_TASK_RESULT_EXPIRES = 10
+CELERY_ACCEPT_CONTENT = ['msgpack', ]
 import djcelery
 djcelery.setup_loader()
 

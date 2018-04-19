@@ -26,7 +26,7 @@ from blockchain_db.models import TBitSpecialAddress
 @debug_time
 def ltc_position_warning_notification():
     '''
-    LTC每小时执行，生成预警提醒
+    LTC每小时执行，生成仓位预警提醒
     '''
     year = now().year
     month = now().month
@@ -75,7 +75,7 @@ def ltc_position_warning_notification():
 @debug_time
 def btc_position_warning_notification():
     '''
-    BTC每小时执行，生成预警提醒
+    BTC每小时执行，生成仓位预警提醒
     '''
     year = now().year
     month = now().month

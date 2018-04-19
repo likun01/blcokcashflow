@@ -369,21 +369,20 @@ class ExchangeAVGAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         get_data = request.query_params.copy()
-        groupind = int(get_data.get('groupind', '1000000'))
         coin = get_data.get('coin', 'LTC')
         data = OrderedDict()
         user = app_user(request)
 
         if coin == 'BTC':
             recharge_qs = BitExchangeRecharge.objects.using(
-                'btc').filter(groupind=groupind).order_by('trans_date')
+                'btc').filter(groupind=4).order_by('trans_date')
             withdraw_qs = BitExchangeWithdraw.objects.using(
-                'btc').filter(groupind=groupind).order_by('trans_date')
+                'btc').filter(groupind=4).order_by('trans_date')
         else:
             recharge_qs = LiteExchangeRecharge.objects.using(
-                'ltc').filter(groupind=groupind).order_by('trans_date')
+                'ltc').filter(groupind=1).order_by('trans_date')
             withdraw_qs = LiteExchangeWithdraw.objects.using(
-                'ltc').filter(groupind=groupind).order_by('trans_date')
+                'ltc').filter(groupind=1).order_by('trans_date')
 
         if not (user and user.is_member):
             recharge_qs = recharge_qs.filter(

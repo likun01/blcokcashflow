@@ -184,7 +184,7 @@ def message_notification(sender, instance=None, created=False, **kwargs):
         if instance.post_method in ['all', 'push']:
             push_required = True
         if instance.post_topic:
-            Notification.objects.update_or_create(content_type=content_type, object_id=instance.pk, defaults={'title': instance.title, 'desc': instance.summary, 'devicetype': instance.devicetype, 'platform': instance.platform,
+            Notification.objects.update_or_create(content_type=content_type, object_id=instance.pk, defaults={'title': instance.title, 'desc': instance.summary, 'devicetype': instance.devicetype,
                                                                                                               'ntf_type': instance.post_method, 'push_datetime': instance.post_datetime, 'push_required': push_required, 'urlscheme': instance.urlscheme_quote()})
     else:
         Notification.objects.filter(content_type=content_type,

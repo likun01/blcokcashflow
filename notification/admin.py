@@ -9,7 +9,7 @@ from notification.forms import UserMessageForm
 class UserMessageAdmin(admin.ModelAdmin):
     form = UserMessageForm
     fields = ('title', 'image', 'summary', 'message_type',
-              'type_link', 'type_id', 'expired_datetime', 'post_users', 'post_topic', 'post_method', 'devicetype', 'platform', 'post_datetime', 'status')
+              'type_link', 'type_id', 'expired_datetime', 'post_users', 'post_topic', 'post_method', 'devicetype', 'post_datetime', 'status')
     list_display = (
         'title', 'expired_datetime', 'status', 'post_obj', 'message_type', 'post_datetime', 'post_count')
     list_filter = ('message_type', 'post_method', 'post_topic',
@@ -21,7 +21,7 @@ class UserMessageAdmin(admin.ModelAdmin):
     def post_obj(self, obj):
         if obj.post_topic:
             return obj.get_post_topic_display()
-        return ','.join([user.nickname() for user in obj.post_users.select_related('usersprofile').all()])
+        return ','.join([user.username for user in obj.post_users.all()])
 
     def image_preview(self, obj):
         if obj.image:
