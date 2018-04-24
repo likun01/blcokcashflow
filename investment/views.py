@@ -280,7 +280,7 @@ class TransactionAPIView(APIView):
                     map(lambda x: x.get('buy_price'), buy_arr))
                 profit_avg = '{:.2%}'.format(
                     (sell_price - buy_price_avg) / buy_price_avg)
-                sell.update({'id': address, 'address': address, 'block_time': hq_data.keys()[-1], 'buy_price': buy_price_avg,
+                sell.update({'id': address, 'address': hide_address(address), 'block_time': hq_data.keys()[-1], 'buy_price': buy_price_avg,
                              'sell_price': sell_price, 'profit': profit_avg})
                 points.update({'sell': sell})
 
