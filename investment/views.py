@@ -63,7 +63,7 @@ class QuotationListAPIView(APIView):
             hq = LitecoinChartsDatas.objects.using('ltc').order_by('hisdate')
 
         if not (user and user.is_member):
-            hq = hq.filter(hisdate__lt=now() - datetime.timedelta(days=8))
+            hq = hq.filter(hisdate__lt=now() - datetime.timedelta(days=7))
 
         if coin == 'BTC':
             data = map(lambda x: (datetime2microsecond(
@@ -90,7 +90,7 @@ class PositionListAPIView(APIView):
             qs = IndexHis.objects.using('ltc').order_by('his_date')
 
         if not (user and user.is_member):
-            qs = qs.filter(his_date__lt=now() - datetime.timedelta(days=8))
+            qs = qs.filter(his_date__lt=now() - datetime.timedelta(days=7))
         data = map(lambda x: (datetime2microsecond(x.his_date), x.index_value
                               ), qs)
         start, end = fill_data(data)
@@ -125,7 +125,7 @@ class TransactionAPIView(APIView):
         data = request.query_params.copy()
         address_type = data.get('address_type', '1')
         coin = data.get('coin', 'LTC')
-        hq_data = {}
+        hq_data = OrderedDict()
 
         if coin == 'BTC':
             hq = BitcoinChartsDatas.objects.using('btc').order_by('hisdate')
@@ -143,6 +143,10 @@ class TransactionAPIView(APIView):
             cursor = connections['ltc'].cursor()
             map(lambda x: hq_data.update(
                 {datetime2microsecond(x.hisdate): x.price_usd}), hq)
+
+        end_date = now()
+        if not (user and user.is_member):
+            end_date = now() - datetime.timedelta(days=7)
 
         addresses = map(lambda x: x.address, qs)
 
@@ -177,9 +181,6 @@ class TransactionAPIView(APIView):
             ORDER BY
                 block_time DESC
         '''.format(table)
-        end_date = now()
-        if not (user and user.is_member):
-            end_date = now() - datetime.timedelta(days=8)
 
         cursor.execute(
             sell_sql, [tuple(addresses), end_date])
@@ -192,16 +193,24 @@ class TransactionAPIView(APIView):
         buy_data = {}
         start, end = get_date_range()
 
+        # 按地址生成买数据buy_data
         for address, block_time, input_value, output_value in buy_qs:
             buy = {'address': address, 'block_time': block_time, 'input_value': input_value,
                    'output_value': output_value, 'trans': abs(output_value - input_value)}
             _arr = buy_data.get(address, [])
             _arr.append(buy)
             buy_data.update({address: _arr})
-
+        sell_data = {}
         buy_sell = {}
+        # buy_sell买卖数据一对多
         for address, block_time, input_value, output_value in sell_qs:
             trans = abs(output_value - input_value)
+            # 按地址生成生成卖数据sell_data
+            sell = {'address': address, 'block_time': block_time, 'input_value': input_value,
+                    'output_value': output_value, 'trans': trans}
+            sell_arr = buy_data.get(address, [])
+            sell_arr.append(sell)
+            sell_data.update({address: sell_arr})
 
             _arr = buy_data.get(address, [])
 
@@ -239,7 +248,47 @@ class TransactionAPIView(APIView):
                 buy_sell.update(
                     {'{}{}'.format(b.get('address'), b.get('block_time')): points})
 
-        return Response({'data': buy_sell.values(), 'start': start, 'end': end})
+        only_buy = {}
+        # 寻找买点之后没有卖点的数据
+        for address, block_time, input_value, output_value in buy_qs:
+            trans = abs(output_value - input_value)
+            _arr = sell_data.get(address, [])
+
+            s = False
+            for x in _arr:
+                if x.get('block_time') > block_time:
+                    s = True
+                    break
+            if s:
+                continue
+            else:
+                points = only_buy.get('{}{}'.format(address, block_time), {})
+                buy_arr = points.get('buy', [])
+
+                buy_price = hq_data.get(
+                    datetime2microsecond(block_time.date()))
+
+                sell_price = hq_data.values()[-1]
+
+                profit = '{:.2%}'.format((sell_price - buy_price) / buy_price)
+                address = hide_address(address)
+                buy_arr.append({'id': address, 'address': address, 'block_time': datetime2microsecond(block_time), 'buy_price': buy_price,
+                                'sell_price': sell_price, 'profit': profit})
+                points.update({'buy': buy_arr})
+
+                sell = points.get('sell', {})
+                buy_price_avg = avg(
+                    map(lambda x: x.get('buy_price'), buy_arr))
+                profit_avg = '{:.2%}'.format(
+                    (sell_price - buy_price_avg) / buy_price_avg)
+                sell.update({'id': address, 'address': address, 'block_time': hq_data.keys()[-1], 'buy_price': buy_price_avg,
+                             'sell_price': sell_price, 'profit': profit_avg})
+                points.update({'sell': sell})
+
+                only_buy.update(
+                    {'{}{}'.format(address, block_time): points})
+
+        return Response({'data': buy_sell.values(), 'start': start, 'end': end, 'buy_data': only_buy.values()})
 
 
 class TransactionWarningSubscribeAPIView(APIView):
@@ -271,8 +320,8 @@ class ExchangeAPIView(APIView):
         qs = LiteStockCashflow.objects.using('ltc').order_by('his_date')
         hq = LitecoinChartsDatas.objects.using('ltc').order_by('hisdate')
         if not (user and user.is_member):
-            qs = qs.filter(his_date__lt=now() - datetime.timedelta(days=8))
-            hq = hq.filter(hisdate__lt=now() - datetime.timedelta(days=8))
+            qs = qs.filter(his_date__lt=now() - datetime.timedelta(days=7))
+            hq = hq.filter(hisdate__lt=now() - datetime.timedelta(days=7))
 
         qs = list(qs)
 
@@ -386,9 +435,9 @@ class ExchangeAVGAPIView(APIView):
 
         if not (user and user.is_member):
             recharge_qs = recharge_qs.filter(
-                trans_date__lt=now() - datetime.timedelta(days=8))
+                trans_date__lt=now() - datetime.timedelta(days=7))
             withdraw_qs = withdraw_qs.filter(
-                trans_date__lt=now() - datetime.timedelta(days=8))
+                trans_date__lt=now() - datetime.timedelta(days=7))
 
         if recharge_qs:
             map(lambda x: data.update({str(datetime2microsecond(x.trans_date)): {'recharge': {'tot': x.tot_recharge, 'avg': x.avg_recharge}}}),

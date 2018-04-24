@@ -13,6 +13,10 @@ TRANSACTIONWARNING_CHANGE_CHOICES = (
     ('buy', _(u'买入')),
     ('sell', _(u'卖出')),
 )
+TRANSACTIONWARNING_ADDRESS_TYPE_CHOICES = (
+    (1, _(u'赚钱账户')),
+    (2, _(u'韭菜账户')),
+)
 
 
 class PositionWarning(TimestampMixin):
@@ -31,7 +35,8 @@ class PositionWarning(TimestampMixin):
 class TransactionWarning(TimestampMixin):
     user = models.ForeignKey(User, verbose_name=_(u'用户'))
     address = models.CharField(max_length=64, db_index=True)
-    address_type = models.IntegerField(_(u'地址类型'), default=1)
+    address_type = models.IntegerField(
+        _(u'地址类型'), choices=TRANSACTIONWARNING_ADDRESS_TYPE_CHOICES, default=1)
     change = models.CharField(_(u'涨跌'), max_length=14,
                               choices=TRANSACTIONWARNING_CHANGE_CHOICES, default='buy')
     amount = models.DecimalField(max_digits=20, decimal_places=10)
