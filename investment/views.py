@@ -271,8 +271,7 @@ class TransactionAPIView(APIView):
                 sell_price = hq_data.values()[-1]
 
                 profit = '{:.2%}'.format((sell_price - buy_price) / buy_price)
-                address = hide_address(address)
-                buy_arr.append({'id': address, 'address': address, 'block_time': datetime2microsecond(block_time), 'buy_price': buy_price,
+                buy_arr.append({'id': address, 'address': hide_address(address), 'block_time': datetime2microsecond(block_time), 'buy_price': buy_price,
                                 'sell_price': sell_price, 'profit': profit})
                 points.update({'buy': buy_arr})
 
