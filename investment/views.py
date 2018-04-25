@@ -16,7 +16,7 @@ from usercenter.models import Subscribe
 from collections import OrderedDict
 from django.db import connections
 from blockchain_db.models import BitcoinChartsDatas, TBitSpecialAddress,\
-    BitExchangeRecharge, BitExchangeWithdraw
+    BitExchangeRecharge, BitExchangeWithdraw, BitIndexHis
 
 
 MICROSECONDDAY = 86400000
@@ -85,7 +85,7 @@ class PositionListAPIView(APIView):
         data = request.query_params.copy()
         coin = data.get('coin', 'LTC')
         if coin == 'BTC':
-            qs = IndexHis.objects.using('btc').order_by('his_date')
+            qs = BitIndexHis.objects.using('btc').order_by('his_date')
         else:
             qs = IndexHis.objects.using('ltc').order_by('his_date')
 

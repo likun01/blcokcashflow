@@ -64,14 +64,14 @@ class BitcoinChartsDatas(models.Model):
         db_table = 'bitcoin_charts_datas'
 
 
-class IndexHis(models.Model):
+class BitIndexHis(models.Model):
     index_value = models.DecimalField(
         max_digits=20, decimal_places=10, blank=True, null=True)
     his_date = models.DateField(blank=True, null=True)
 
     class Meta:
         managed = False
-        db_table = 'index_his'
+        db_table = 'bit_index_his'
 
 
 class TBitSpecialAddress(models.Model):

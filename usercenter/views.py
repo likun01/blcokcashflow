@@ -229,7 +229,7 @@ class MemberStatusAPIView(APIView):
     @app_login_required
     def get(self, request, *args, **kwargs):
         user = self.request.app_user
-        return Response({'is_member': user.is_member, 'member_last_date': user.member_last_date})
+        return Response({'is_member': user.is_member, 'member_last_date': user.member_last_date, 'balance': user.balance})
 
 
 class MemberServiceListAPIView(APIView):
