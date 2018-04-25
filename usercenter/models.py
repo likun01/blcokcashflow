@@ -4,6 +4,11 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from common.modelUtils import StatusMixin, TimestampMixin
 import jsonfield
+from django.conf import settings
+from common.utils import random_number, md5
+from string import upper
+import base64
+from django.contrib.sites.models import Site
 
 
 class User(AbstractUser):
@@ -11,6 +16,8 @@ class User(AbstractUser):
     member_last_date = models.DateField(
         _(u'会员到期'), null=True, blank=True, db_index=True)
     token = models.CharField(_(u'token'), max_length=64, db_index=True)
+    balance = models.DecimalField(
+        _(u'余额'), decimal_places=9, max_digits=20, default=0.0)
 
     class Meta:
         verbose_name = _(u'用户')
@@ -18,6 +25,105 @@ class User(AbstractUser):
 
     def __unicode__(self):
         return self.username
+
+    def add_amount(self, amount):
+        balance = float(self.balance)
+        balance += amount
+        self.balance = balance
+        self.save()
+
+
+class UserCode(TimestampMixin):
+    user = models.OneToOneField(User, verbose_name=_(u'用户'))
+    code = models.CharField(_(u'邀请码'), max_length=4,
+                            db_index=True, unique=True)
+    link_code = models.CharField(_(u'链接码'), max_length=8,
+                                 db_index=True, unique=True)
+    link = models.URLField(_(u'邀请链接'))
+
+    class Meta:
+        verbose_name = _(u'用户邀请码')
+        verbose_name_plural = _(u'用户邀请码')
+
+    def __unicode__(self):
+        return self.code
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if not self.code:
+            def make_code():
+                key = md5(str(random_number(8)))
+                code = upper(key[:4])
+                link_code = base64.b64encode(key)[:8]
+                if UserCode.objects.filter(code=code).exists() or UserCode.objects.filter(link_code=link_code).exists():
+                    make_code()
+                return code, link_code
+            code, link_code = make_code()
+            link = '{}/i/{}'.format(Site.objects.get_current().domain, link_code)
+            self.code = code
+            self.link_code = link_code
+            self.link = link
+
+        return super(UserCode, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+
+class UserInvitationRecord(TimestampMixin):
+    user = models.ForeignKey(User, verbose_name=_(
+        u'注册用户'), related_name='inviter')
+    inviter = models.ForeignKey(
+        User, verbose_name=_(u'邀请用户'), related_name='invite_users', null=True, blank=True)
+
+    class Meta:
+        verbose_name = _(u'用户邀请记录')
+        verbose_name_plural = _(u'用户邀请记录')
+
+    def __unicode__(self):
+        return self.user.username
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if self.pk is None:
+            # 注册用户奖励
+            UserBalanceRecord.objects.create(
+                user=self.user,  trans_type='register', amount=settings.INVITATION_AMOUNT)
+            if self.inviter:
+                # 邀请用户奖励
+                UserBalanceRecord.objects.create(
+                    user=self.inviter, inviter=self.user, trans_type='invitation', amount=settings.INVITATION_AMOUNT)
+        return super(UserInvitationRecord, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+
+TRANS_TYPE_CHOICES = (
+    ('invitation', '邀请注册'),
+    ('register', '注册'),
+
+)
+
+
+class UserBalanceRecord(TimestampMixin):
+    user = models.ForeignKey(User, verbose_name=_(
+        u'用户'), related_name='invite_users_banlance')
+    inviter = models.ForeignKey(
+        User, verbose_name=_(u'被邀请用户'), related_name='inviter_banlance', null=True, blank=True)
+    trans_type = models.CharField(
+        _(u'交易类型'), max_length=16, choices=TRANS_TYPE_CHOICES, db_index=True, default='invitation')
+    amount = models.DecimalField(
+        _(u'数量'), decimal_places=9, max_digits=20, default=0.0)
+
+    class Meta:
+        verbose_name = _(u'用户余额记录')
+        verbose_name_plural = _(u'用户余额记录')
+        ordering = ('-created_datetime',)
+
+    def __unicode__(self):
+        return self.user.username
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if self.pk is None:
+            self.user.add_amount(self.amount)
+
+        return super(UserBalanceRecord, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
 
 COIN_TYPE_CHOICES = (
@@ -34,7 +140,7 @@ class MemberService(StatusMixin, TimestampMixin):
         _(u'币种'), max_length=32, choices=COIN_TYPE_CHOICES, db_index=True)
     duration = models.SmallIntegerField(_(u'时长'), default=0)
     price = models.DecimalField(
-        _(u'金额'), decimal_places=2, max_digits=8, default=0.0)
+        _(u'金额'), decimal_places=9, max_digits=20, default=0.0)
     discount = models.SmallIntegerField(_(u'折扣'), default=10)
 
     class Meta:

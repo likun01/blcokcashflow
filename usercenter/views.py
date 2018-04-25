@@ -5,14 +5,15 @@ from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from usercenter.models import User, MemberService, MemberOrder,\
     MemberOrderNotificationRecord, SubscribeSetting, Subscribe, DeivceVcode,\
-    EmailEcode
+    EmailEcode, UserCode, UserInvitationRecord, UserBalanceRecord
 from django.contrib.auth import authenticate, login
 
 from common.utils import random_number, md5, debug
 from django.conf import settings
 from rest_framework.response import Response
 from usercenter.serializers import UserSerializer, MemberServiceSerializer,\
-    MemberOrderSerializer, SubscribeSettingSerializer, SubscribeSerializer
+    MemberOrderSerializer, SubscribeSettingSerializer, SubscribeSerializer,\
+    UserBalanceRecordSerializer
 from _io import BytesIO
 from common import check_code, bitpay_rates
 from django.http.response import HttpResponse
@@ -27,6 +28,7 @@ from django.utils.timezone import now
 import datetime
 from string import upper, lower
 from django.template.loader import render_to_string
+from django.views.generic.base import View
 
 
 class LoginAPIView(APIView):
@@ -172,10 +174,24 @@ class RegisterAPIView(APIView):
         origin_ecode = ec.ecode if ec else ''
         if ecode != origin_ecode:
             return Response({'code': 40002, 'detail': _(u'邮箱验证码错误')})
+
         user = User.objects.create_user(username, email, password)
         user.token = md5(
             '{0}{1}{2}'.format(username, random_number(6), settings.SECRET_KEY))
         user.save()
+
+        # 注册邀请记录
+        icode = data.get('icode')
+
+        if icode:
+            try:
+                uc = UserCode.objects.get(code=icode)
+                UserInvitationRecord.objects.create(user=user, inviter=uc.user)
+            except UserCode.DoesNotExist:
+                return Response({'code': 40002, 'detail': _(u'邀请码不存在')})
+        else:
+            UserInvitationRecord.objects.create(user=user)
+
         user = authenticate(username=username, password=password)
         login(request, user)
         return Response(UserSerializer(user).data)
@@ -391,3 +407,29 @@ class IosPayCheck(APIView):
 
     def get(self, request, *args, **kwargs):
         return Response({'show': settings.IOS_PAY_SHOW})
+
+
+class UserInvitationAPIView(APIView):
+    '''
+    用户邀请码，邀请链接
+    '''
+    @app_login_required
+    def get(self, request, *args, **kwargs):
+        user = request.app_user
+        uc, _ = UserCode.objects.get_or_create(user=user)
+        return Response({'icode': uc.code, 'link': uc.link})
+
+
+class UserBalanceListAPIView(ListAPIView):
+    '''
+    余额变化列表
+    '''
+    serializer_class = UserBalanceRecordSerializer
+
+    def get_queryset(self):
+        user = self.request.app_user
+        return UserBalanceRecord.objects.filter(user=user)
+
+    @app_login_required
+    def get(self, request, *args, **kwargs):
+        return super(UserBalanceListAPIView, self).get(request, *args, **kwargs)

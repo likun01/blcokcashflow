@@ -1,7 +1,8 @@
 # coding: utf-8
 from django.contrib import admin
 from usercenter.models import User, MemberService, MemberOrder,\
-    MemberOrderNotificationRecord, SubscribeSetting, Subscribe
+    MemberOrderNotificationRecord, SubscribeSetting, Subscribe, UserCode,\
+    UserInvitationRecord, UserBalanceRecord
 
 
 @admin.register(User)
@@ -59,3 +60,30 @@ class SubscribeAdmin(admin.ModelAdmin):
     list_filter = ('status', 'category', 'coin_type',)
     search_fields = ('user__username', 'user__email',)
     raw_id_fields = ('user',)
+
+
+@admin.register(UserCode)
+class UserCodeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'code', 'link_code', 'link')
+
+    search_fields = ('code', 'user__username', 'user__email',)
+    raw_id_fields = ('user',)
+
+
+@admin.register(UserInvitationRecord)
+class UserInvitationRecordAdmin(admin.ModelAdmin):
+    list_display = ('user', 'inviter', 'created_datetime',)
+
+    search_fields = ('inviter__username', 'inviter__email',
+                     'user__username', 'user__email',)
+    raw_id_fields = ('user', 'inviter')
+
+
+@admin.register(UserBalanceRecord)
+class UserBalanceRecordAdmin(admin.ModelAdmin):
+    list_display = ('user', 'inviter', 'trans_type',
+                    'amount', 'created_datetime',)
+    list_filter = ('trans_type',)
+    search_fields = ('inviter__username', 'inviter__email',
+                     'user__username', 'user__email',)
+    raw_id_fields = ('user', 'inviter')
