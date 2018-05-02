@@ -450,8 +450,10 @@ class ExchangeAVGAPIView(APIView):
                 withdraw.update(
                     {'withdraw': {'tot': obj.tot_withdraw, 'avg': obj.avg_with_draw}})
                 data.update({key: withdraw})
+
             withdraw_line, recharge_line, in_bar, out_bar, net_bar = [], [], [], [], []
-            for day, v in data.items():
+            for day in sorted(data.keys()):
+                v = data.get(day)
                 day = int(day)
                 withdraw = v.get('withdraw', {})
                 recharge = v.get('recharge', {})
