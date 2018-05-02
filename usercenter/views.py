@@ -28,7 +28,6 @@ from django.utils.timezone import now
 import datetime
 from string import upper, lower
 from django.template.loader import render_to_string
-from django.views.generic.base import View
 
 
 class LoginAPIView(APIView):

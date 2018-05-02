@@ -7,7 +7,7 @@ from usercenter.models import User, MemberService, MemberOrder,\
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'email', 'is_member',
+    list_display = ('username', 'email', 'is_member', 'balance',
                     'member_last_date', 'token')
     list_filter = ('is_member',)
     search_fields = ('username', 'email',)

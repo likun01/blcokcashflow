@@ -8,8 +8,6 @@ from rest_framework import serializers
 from usercenter.models import User, MemberService, MemberOrder, SubscribeSetting,\
     Subscribe, UserBalanceRecord
 from common.utils import hide_address
-from django.utils import timezone
-from django.utils.timezone import get_current_timezone
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -60,7 +58,6 @@ class UserBalanceRecordSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     is_member = serializers.SerializerMethodField()
     trans_type = serializers.CharField(source='get_trans_type_display')
-    created_datetime = serializers.SerializerMethodField()
 
     class Meta:
         model = UserBalanceRecord
@@ -77,6 +74,3 @@ class UserBalanceRecordSerializer(serializers.ModelSerializer):
         if obj.inviter:
             is_member = obj.inviter.is_member
         return is_member and u'VIP会员' or u'普通会员'
-
-    def get_created_datetime(self, obj):
-        return timezone.make_aware(timezone.make_naive(obj.created_datetime), get_current_timezone()).strftime('%Y-%m-%d %H:%M:%S')
