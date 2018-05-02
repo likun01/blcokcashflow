@@ -446,23 +446,23 @@ class ExchangeAVGAPIView(APIView):
 
             for obj in withdraw_qs:
                 key = str(datetime2microsecond(obj.trans_date))
-                withdraw = data.get(key)
-                if withdraw:
-                    withdraw.update(
-                        {'withdraw': {'tot': obj.tot_withdraw, 'avg': obj.avg_with_draw}})
+                withdraw = data.get(key, {})
+                withdraw.update(
+                    {'withdraw': {'tot': obj.tot_withdraw, 'avg': obj.avg_with_draw}})
+                data.update({key: withdraw})
             withdraw_line, recharge_line, in_bar, out_bar, net_bar = [], [], [], [], []
             for day, v in data.items():
                 day = int(day)
-                withdraw = v.get('withdraw')
-                recharge = v.get('recharge')
-                if withdraw and recharge:
-                    withdraw_line.append((day, withdraw.get('avg')))
-                    recharge_line.append((day, recharge.get('avg')))
-                    inflow = recharge.get('tot')
-                    outflow = withdraw.get('tot')
-                    in_bar.append((day, inflow))
-                    out_bar.append((day, outflow))
-                    net_bar.append((day, inflow - outflow))
+                withdraw = v.get('withdraw', {})
+                recharge = v.get('recharge', {})
+
+                withdraw_line.append((day, withdraw.get('avg', 0)))
+                recharge_line.append((day, recharge.get('avg', 0)))
+                inflow = recharge.get('tot', 0)
+                outflow = withdraw.get('tot', 0)
+                in_bar.append((day, inflow))
+                out_bar.append((day, outflow))
+                net_bar.append((day, inflow - outflow))
 
             start, end = fill_data(in_bar)
             fill_data(out_bar)
