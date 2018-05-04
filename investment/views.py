@@ -8,7 +8,8 @@ from common.rest_utils import app_user, app_data_required, app_member_required,\
 
 import datetime
 from rest_framework.views import APIView
-from common.utils import datetime2microsecond, avg, hide_address
+from common.utils import datetime2microsecond, avg, hide_address, coin_name,\
+    send_mail_files
 from common.models_ltc_db import IndexHis, TLiteSpecialAddress,\
     LiteStockCashflow, LiteExchangeRecharge, LiteExchangeWithdraw,\
     LitecoinChartsDatas
@@ -17,6 +18,8 @@ from collections import OrderedDict
 from django.db import connections
 from blockchain_db.models import BitcoinChartsDatas, TBitSpecialAddress,\
     BitExchangeRecharge, BitExchangeWithdraw, BitIndexHis
+import pygal
+from django.conf import settings
 
 
 MICROSECONDDAY = 86400000
@@ -479,3 +482,139 @@ class ExchangeAVGAPIView(APIView):
                              'net_bar': {'data': net_bar, 'name': _(u'净流入')},
                              'start': start, 'end': end})
         return data_bad_response()
+
+
+class ImagesTempAPIView(APIView):
+    def get(self, request, *args, **kwargs):
+        data = request.query_params.copy()
+        coin = data.get('coin', 'LTC')
+        start = data.get('start')
+        end = data.get('end')
+        email = data.get('email')
+
+        # 近期行情
+        if coin == 'BTC':
+            hq = BitcoinChartsDatas.objects.using('btc').order_by('hisdate')
+        else:
+            hq = LitecoinChartsDatas.objects.using('ltc').order_by('hisdate')
+        hq = hq.filter(hisdate__gte=start, hisdate__lte=end)
+        hq_date = map(lambda x: x.hisdate, hq)
+        if coin == 'BTC':
+            hq_data = map(lambda x: x.price, hq)
+        else:
+            hq_data = map(lambda x: x.price_usd, hq)
+
+        hq_chart = pygal.Line()
+        hq_chart.x_labels = hq_date
+        hq_chart.add(u'{}行情'.format(coin_name(coin)), hq_data)
+        hq_path = u'{}chart/{}_hq_{}_{}.png'.format(
+            settings.MEDIA_ROOT, coin, start, end)
+        hq_chart.render_to_png(hq_path)
+
+        # 账户买卖比例
+        if coin == 'BTC':
+            qs1 = TBitSpecialAddress.objects.using(
+                'btc').filter(address_type=1).only('address')
+            qs2 = TBitSpecialAddress.objects.using(
+                'btc').filter(address_type=2).only('address')
+            table = 'blockchain_db.bitcoin_cashflow_output'
+            cursor = connections['btc'].cursor()
+
+        else:
+            qs1 = TLiteSpecialAddress.objects.using(
+                'ltc').filter(address_type=1).only('address')
+            qs2 = TLiteSpecialAddress.objects.using(
+                'ltc').filter(address_type=2).only('address')
+            table = 'ltc_db.litecoin_cashflow_output'
+            cursor = connections['ltc'].cursor()
+
+        addresses1 = map(lambda x: x.address, qs1)
+        addresses2 = map(lambda x: x.address, qs2)
+
+        sell_sql = '''
+            SELECT
+                count(*)
+            FROM
+                {0}
+            WHERE
+                (output_value - input_value) < 0
+            AND address IN %s
+            AND block_time > %s
+            AND block_time < %s
+            ORDER BY
+                block_time DESC
+            
+        '''.format(table)
+        buy_sql = '''
+            SELECT
+                count(*)
+            FROM
+                {0}
+            WHERE
+                (output_value - input_value) > 0
+            AND address IN %s
+            AND block_time > %s
+            AND block_time < %s
+            ORDER BY
+                block_time DESC
+        '''.format(table)
+
+        cursor.execute(
+            sell_sql, [tuple(addresses1), start, end])
+        sell1 = cursor.fetchone()[0]
+
+        cursor.execute(
+            sell_sql, [tuple(addresses2), start, end])
+        sell2 = cursor.fetchone()[0]
+
+        cursor.execute(
+            buy_sql, [tuple(addresses1), start, end])
+        buy1 = cursor.fetchone()[0]
+
+        cursor.execute(
+            buy_sql, [tuple(addresses2), start, end])
+        buy2 = cursor.fetchone()[0]
+
+        bar_chart = pygal.HorizontalStackedBar(print_values=True)
+        bar_chart.x_labels = ('', u'聪明账户', u'韭菜账户',  '')
+        if buy1 and sell1:
+            bar_chart.add(
+                u'买', (buy1 / (sell1 + buy1), buy2 / (sell2 + buy2)))
+            bar_chart.add(
+                u'卖', (sell1 / (sell1 + buy1), sell2 / (sell2 + buy2)))
+
+        bar_chart_path = u'{}chart/{}_bar_{}_{}.png'.format(
+            settings.MEDIA_ROOT, coin, start, end)
+        bar_chart.render_to_png(bar_chart_path)
+
+        # 前5大交易所充值提现
+        tran_chart = pygal.Line()
+        tran_chart.x_labels = hq_date
+        tran_chart.add(u'充值', hq_data)
+        tran_chart.add(u'提现', hq_data)
+        tran_chart_path = u'{}chart/{}_tran_{}_{}.png'.format(
+            settings.MEDIA_ROOT, coin, start, end)
+        tran_chart.render_to_png(tran_chart_path)
+
+        # 前1000持仓变化
+        hold_chart = pygal.StackedLine(fill=True)
+        hold_chart.x_labels = hq_date
+        hold_chart.add(u'前1000持仓', hq_data)
+        hold_chart.add(u'前1000(排除交易所)', hq_data)
+        hold_chart_path = u'{}chart/{}_hold_{}_{}.png'.format(
+            settings.MEDIA_ROOT, coin, start, end)
+        hold_chart.render_to_png(hold_chart_path)
+
+        # 用户类型持仓
+        pie_chart = pygal.Pie(print_values=True)
+        pie_chart.add(u'交易所', 33.3)
+        pie_chart.add(u'矿机', 33.3)
+        pie_chart.add(u'其他', 33.4)
+        pie_chart_path = u'{}chart/{}_pie_{}_{}.png'.format(
+            settings.MEDIA_ROOT, coin, start, end)
+        pie_chart.render_to_png(pie_chart_path)
+
+#         send_mail_files(u'{}至{}{}模版'.format(
+#             start, end, coin_name(coin)), [email, ], [hq_path, bar_chart_path,
+#                     tran_chart_path, hold_chart_path, pie_chart_path])
+        return Response({'code': 0, 'detail': u'图片已发至邮箱'})

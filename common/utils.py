@@ -9,6 +9,10 @@ import StringIO
 import base64
 
 from django.db.models.expressions import Func
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import smtplib
+from django.conf import settings
 
 
 def debug(token, info, error=False):
@@ -117,3 +121,35 @@ def hide_address(address):
     if address:
         return '{0}{1}'.format(address[:4], (len(address) - 4) * '*')
     return ''
+
+
+def coin_name(coin):
+    coin_choices = {'BTC': u'比特币', 'LTC': u'莱特币'}
+    if coin in coin_choices:
+        return coin_choices.get(coin)
+    return coin
+
+
+def send_mail_files(subject, recipient_list, files):
+    sender = settings.SERVER_EMAIL
+
+    smtpserver = settings.EMAIL_HOST
+    username = settings.EMAIL_HOST_USER
+    password = settings.EMAIL_HOST_PASSWORD
+
+    msgRoot = MIMEMultipart('related')
+    msgRoot['Subject'] = subject
+
+    for path in files:
+        # 构造附件
+        fname = path.split('/')[-1]
+        att = MIMEText(open(path, 'rb').read(), 'base64', 'utf-8')
+        att["Content-Type"] = 'application/octet-stream'
+        att["Content-Disposition"] = 'attachment; filename="{}"'.format(fname)
+        msgRoot.attach(att)
+
+    smtp = smtplib.SMTP()
+    smtp.connect(smtpserver)
+    smtp.login(username, password)
+    smtp.sendmail(sender, recipient_list, msgRoot.as_string())
+    smtp.quit()

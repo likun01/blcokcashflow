@@ -19,7 +19,12 @@ django-aliyun-oss2-storage==0.1.1
 django-pagedown==0.1.1
 djangorestframework==3.5.3
 aliyun-python-sdk-push==3.10.0
-pygal==2.3.1
+pygal==2.4.0
+#brew install  cairo libxml2 libxslt libffi 
+cairosvg==1.0.22
+cssselect-1.0.3
+lxml-4.2.1
+tinycss-0.4
 qrcode==5.3
 ipython==5.5.0
 django-jsonfield==1.0.1

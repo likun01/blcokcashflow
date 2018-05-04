@@ -27,6 +27,7 @@ class NodeAPIRedirectMiddleware(object):
         re.compile(r'^/api/trade/'),
         re.compile(r'^/api/user/'),
         re.compile(r'^/api/unconf'),
+        re.compile(r'^/api/back/'),
     )
 
     def is_not_ignorable_request(self, request):
