@@ -7,7 +7,7 @@ django-redis==3.8.3
 uwsgi==2.0.12
 xpinyin==0.5.4
 django-debug-toolbar==1.9.1
-celery==3.1.26
+celery==3.1.25
 django-celery==3.1.17
 celery-with-redis==3.0
 django_extensions==1.6.7
@@ -20,14 +20,16 @@ django-pagedown==0.1.1
 djangorestframework==3.5.3
 aliyun-python-sdk-push==3.10.0
 pygal==2.4.0
-#brew install  cairo libxml2 libxslt libffi 
+#brew install  cairo libxml2 libxslt libffi
+#centos yun install cairo-devel
 cairosvg==1.0.22
-cssselect-1.0.3
-lxml-4.2.1
-tinycss-0.4
+cssselect==1.0.3
+lxml==4.2.1
+tinycss==0.4
 qrcode==5.3
 ipython==5.5.0
 django-jsonfield==1.0.1
 bitpay-py2==2.3.5
 git+https://github.com/warner/python-ecdsa.git
 django-cors-headers==2.2.0
+pycairo==1.17.0

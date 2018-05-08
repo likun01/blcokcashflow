@@ -83,3 +83,61 @@ class TBitSpecialAddress(models.Model):
     class Meta:
         managed = False
         db_table = 't_bit_special_address'
+
+
+class TBitBalanceRank1000His(models.Model):
+    ranking = models.IntegerField(blank=True, null=True)
+    address = models.CharField(max_length=64, blank=True, null=True)
+    balance = models.DecimalField(
+        max_digits=20, decimal_places=10, blank=True, null=True)
+    # Field renamed because it wasn't a valid Python identifier.
+    number_24_in_volume = models.DecimalField(
+        db_column='24_in_volume', max_digits=20, decimal_places=10, blank=True, null=True)
+    # Field renamed because it wasn't a valid Python identifier.
+    number_24_out_volume = models.DecimalField(
+        db_column='24_out_volume', max_digits=20, decimal_places=10, blank=True, null=True)
+    # Field renamed because it wasn't a valid Python identifier.
+    number_24_in_transcount = models.IntegerField(
+        db_column='24_in_transcount', blank=True, null=True)
+    # Field renamed because it wasn't a valid Python identifier.
+    number_24_out_transcount = models.IntegerField(
+        db_column='24_out_transcount', blank=True, null=True)
+    yesterday_balance = models.DecimalField(
+        max_digits=20, decimal_places=10, blank=True, null=True)
+    # Field renamed because it wasn't a valid Python identifier.
+    number_7d_balance = models.DecimalField(
+        db_column='7d_balance', max_digits=20, decimal_places=10, blank=True, null=True)
+    # Field renamed because it wasn't a valid Python identifier.
+    number_30d_balance = models.DecimalField(
+        db_column='30d_balance', max_digits=20, decimal_places=10, blank=True, null=True)
+    # Field renamed because it wasn't a valid Python identifier.
+    number_180d_balance = models.DecimalField(
+        db_column='180d_balance', max_digits=20, decimal_places=10, blank=True, null=True)
+    # Field renamed because it wasn't a valid Python identifier.
+    number_365d_balance = models.DecimalField(
+        db_column='365d_balance', max_digits=20, decimal_places=10, blank=True, null=True)
+    his_date = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 't_bit_balance_rank1000_his'
+
+
+class BitMinerlist(models.Model):
+    address = models.CharField(max_length=64, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'bit_minerlist'
+
+
+class BitKnewAddress2(models.Model):
+    address = models.CharField(
+        unique=True, max_length=64, blank=True, null=True)
+    groupind = models.IntegerField()
+    onoroff = models.IntegerField(blank=True, null=True)
+    createtime = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'bit_knew_address2'

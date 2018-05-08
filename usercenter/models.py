@@ -9,6 +9,7 @@ from common.utils import random_number, md5
 from string import upper
 import base64
 from django.contrib.sites.models import Site
+from django.db.models.aggregates import Sum
 
 
 class User(AbstractUser):
@@ -31,6 +32,13 @@ class User(AbstractUser):
         balance += amount
         self.balance = balance
         self.save()
+
+    def subtract_amount(self, amount):
+        balance = float(self.balance)
+        if balance >= amount:
+            balance -= amount
+            self.balance = balance
+            self.save()
 
 
 class UserCode(TimestampMixin):
@@ -83,19 +91,28 @@ class UserInvitationRecord(TimestampMixin):
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
         if self.pk is None:
-            # 注册用户奖励
-            UserBalanceRecord.objects.create(
-                user=self.user,  trans_type='register', amount=settings.INVITATION_AMOUNT)
             if self.inviter:
                 # 邀请用户奖励
-                UserBalanceRecord.objects.create(
-                    user=self.inviter, inviter=self.user, trans_type='invitation', amount=settings.INVITATION_AMOUNT)
+                sum_amount = UserBalanceRecord.objects.filter(
+                    user=self.inviter, trans_type='invitation').aggregate(sum_amount=Sum('amount')).get('sum_amount')
+                if sum_amount < settings.INVITATION_MAX_AMOUNT:
+                    amount = settings.INVITATION_REGISTER_AMOUNT
+                    inviter_amount = settings.INVITATION_AMOUNT
+                    UserBalanceRecord.objects.create(
+                        user=self.inviter, inviter=self.user, trans_type='invitation', amount=inviter_amount)
+            else:
+                amount = settings.REGISTER_AMOUNT
+            # 注册用户奖励
+            UserBalanceRecord.objects.create(
+                user=self.user,  trans_type='register', amount=amount)
         return super(UserInvitationRecord, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
 
 TRANS_TYPE_CHOICES = (
-    ('invitation', '邀请注册'),
-    ('register', '注册'),
+    ('invitation', u'邀请注册'),
+    ('register', u'注册'),
+    ('pay_member', u'购买会员'),
+
 
 )
 
@@ -121,7 +138,10 @@ class UserBalanceRecord(TimestampMixin):
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
         if self.pk is None:
-            self.user.add_amount(self.amount)
+            if self.trans_type in('invitation', 'register'):
+                self.user.add_amount(self.amount)
+            else:
+                self.user.subtract_amount(self.amount)
 
         return super(UserBalanceRecord, self).save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
@@ -131,6 +151,7 @@ COIN_TYPE_CHOICES = (
     ('BCH', 'BCH'),
     ('ETH', 'ETH'),
     ('LTC', 'LTC'),
+    ('BCF', 'BCF'),
 )
 
 

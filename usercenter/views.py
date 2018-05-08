@@ -241,11 +241,15 @@ class MemberServiceListAPIView(APIView):
         qs = MemberService.objects.filter(status=1).order_by('coin_type')
         objs = self.serializer_class(qs, many=True).data
         data = {}
-        rate = bitpay_rates.get_usd_rate()
+        btc_rate = bitpay_rates.get_usd_rate()
         for obj in objs:
             ct = obj.get('coin_type')
             arr = data.get(ct, [])
             if ct == 'BTC':
+                obj.update({'coin_price': round(float(obj.get('price')) /
+                                                btc_rate, 8)})
+            elif ct == 'BCF':
+                rate = settings.BCF_RATE
                 obj.update({'coin_price': round(float(obj.get('price')) /
                                                 rate, 8)})
             arr.append(obj)
@@ -284,35 +288,48 @@ class MemberPaymentAPIView(APIView):
         data = request.data
         mspk = data.get('mspk')
         ms = MemberService.objects.get(pk=mspk)
-
-        if MemberOrder.objects.filter(user=user, status__in=('new', 'paid'), created_datetime__gt=now() - datetime.timedelta(seconds=15 * 60)).exists():
-            return Response({'code': 40009, 'detail': _(u'未支付或未确认订单等待处理')})
         last_date = user.member_last_date
+        if last_date and now().date() + datetime.timedelta(days=15) < last_date:
+            return Response({'code': 40009, 'detail': _(u'会员到期前15天可续费')})
         if last_date and now().date() <= last_date:
             start_date = last_date + datetime.timedelta(days=1)
         else:
             start_date = now().date()
+        if MemberOrder.objects.filter(user=user, status__in=('new', 'paid'), created_datetime__gt=now() - datetime.timedelta(seconds=15 * 60)).exists():
+            return Response({'code': 40009, 'detail': _(u'未支付或未确认订单等待处理')})
         end_date = start_date + datetime.timedelta(days=ms.duration)
-
-        price = round(float(ms.price) / bitpay_rates.get_usd_rate(), 8)
-        notificationURL = '{0}/api/users/payment/callback/'.format(
-            Site.objects.get_current(request).domain)
         order_id = '{0}{1}'.format(int(time.time()), random_number(4))
+        if ms.coin_type == 'BTC':
+            price = round(float(ms.price) / bitpay_rates.get_usd_rate(), 8)
+            notificationURL = '{0}/api/users/payment/callback/'.format(
+                Site.objects.get_current(request).domain)
 
-        client = Client(api_uri=settings.BITPAY_API_URL,
-                        insecure=False, pem=settings.BITPAY_KEY)
+            client = Client(api_uri=settings.BITPAY_API_URL,
+                            insecure=False, pem=settings.BITPAY_KEY)
 
-#         print client.create_token('merchant')
-#         token = client.tokens['merchant']
-#         print token
-        token = settings.BITPAY_TOKEN
-        data = client.create_invoice({"price": price, "currency": ms.coin_type, "transactionSpeed": "medium", "fullNotifications": "true", "notificationURL":
-                                      notificationURL, "buyer": {"email": user.email}, "orderId": order_id, "token": token})
+    #         print client.create_token('merchant')
+    #         token = client.tokens['merchant']
+    #         print token
+            token = settings.BITPAY_TOKEN
+            data = client.create_invoice({"price": price, "currency": ms.coin_type, "transactionSpeed": "medium", "fullNotifications": "true", "notificationURL":
+                                          notificationURL, "buyer": {"email": user.email}, "orderId": order_id, "token": token})
 
-        order = MemberOrder.objects.create(order_id=order_id, user=user, service=ms, guid=data.get('guid', ''), url=data.get('url'), start_date=start_date, end_date=end_date, coin_type=ms.coin_type, coin_amount=price, status=data.get(
-            'status'), exception_status=data.get('exceptionStatus'), invoice_id=data.get('id'), addresses=data.get('addresses'), origin=data)
-        debug('payment_data', data)
-        return Response({'invoice_id': order.invoice_id, 'url': data.get('url')})
+            order = MemberOrder.objects.create(order_id=order_id, user=user, service=ms, guid=data.get('guid', ''), url=data.get('url'), start_date=start_date, end_date=end_date, coin_type=ms.coin_type, coin_amount=price, status=data.get(
+                'status'), exception_status=data.get('exceptionStatus'), invoice_id=data.get('id'), addresses=data.get('addresses'), origin=data)
+            debug('payment_data', data)
+            return Response({'invoice_id': order.invoice_id, 'url': data.get('url')})
+        elif ms.coin_type == 'BCF':
+            price = round(float(ms.price) / settings.BCF_RATE, 8)
+            if float(user.balance) < price:
+                return Response({'code': 40009, 'detail': _(u'账户BCF余额不足')})
+            order = MemberOrder.objects.create(order_id=order_id, user=user, service=ms, guid='', url='', start_date=start_date, end_date=end_date,
+                                               coin_type=ms.coin_type, coin_amount=price, status='complete', exception_status='false', invoice_id='', addresses='', origin='')
+            user.is_member = True
+            user.member_last_date = order.end_date
+            user.save()
+            UserBalanceRecord.objects.create(
+                user=user,  trans_type='pay_member', amount=price)
+            return Response({'code': 0, 'detail': u'支付成功'})
 
 
 class MemberPaymentCallbackAPIView(APIView):

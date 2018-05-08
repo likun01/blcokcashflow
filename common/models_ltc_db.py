@@ -14,15 +14,11 @@ from django.db import models
 
 class BuyandsellWinnerList(models.Model):
     address = models.CharField(max_length=64, blank=True, null=True)
-    wincount = models.DecimalField(
-        max_digits=23, decimal_places=0, blank=True, null=True)
+    wincount = models.DecimalField(max_digits=23, decimal_places=0, blank=True, null=True)
     count = models.BigIntegerField()
-    losecount = models.DecimalField(
-        max_digits=23, decimal_places=0, blank=True, null=True)
-    winrate = models.DecimalField(
-        max_digits=27, decimal_places=4, blank=True, null=True)
-    loserate = models.DecimalField(
-        max_digits=27, decimal_places=4, blank=True, null=True)
+    losecount = models.DecimalField(max_digits=23, decimal_places=0, blank=True, null=True)
+    winrate = models.DecimalField(max_digits=27, decimal_places=4, blank=True, null=True)
+    loserate = models.DecimalField(max_digits=27, decimal_places=4, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -40,8 +36,7 @@ class Goodaddress(models.Model):
 
 class IndexBalanceHis(models.Model):
     address = models.CharField(max_length=64, blank=True, null=True)
-    balance = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    balance = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
     his_date = models.DateField(blank=True, null=True)
 
     class Meta:
@@ -50,8 +45,7 @@ class IndexBalanceHis(models.Model):
 
 
 class IndexHis(models.Model):
-    index_value = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    index_value = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
     his_date = models.DateField(blank=True, null=True)
 
     class Meta:
@@ -60,8 +54,7 @@ class IndexHis(models.Model):
 
 
 class IndexHisBak(models.Model):
-    index_value = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    index_value = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
     his_date = models.DateField(blank=True, null=True)
     id = models.IntegerField()
 
@@ -73,10 +66,8 @@ class IndexHisBak(models.Model):
 class LiteExchangeRecharge(models.Model):
     groupind = models.IntegerField()
     trans_date = models.DateField(blank=True, null=True)
-    tot_recharge = models.DecimalField(
-        max_digits=42, decimal_places=10, blank=True, null=True)
-    avg_recharge = models.DecimalField(
-        max_digits=24, decimal_places=14, blank=True, null=True)
+    tot_recharge = models.DecimalField(max_digits=42, decimal_places=10, blank=True, null=True)
+    avg_recharge = models.DecimalField(max_digits=24, decimal_places=14, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -86,32 +77,44 @@ class LiteExchangeRecharge(models.Model):
 class LiteExchangeWithdraw(models.Model):
     groupind = models.IntegerField()
     trans_date = models.DateField(blank=True, null=True)
-    tot_withdraw = models.DecimalField(
-        max_digits=42, decimal_places=10, blank=True, null=True)
-    avg_with_draw = models.DecimalField(
-        max_digits=24, decimal_places=14, blank=True, null=True)
+    tot_withdraw = models.DecimalField(max_digits=42, decimal_places=10, blank=True, null=True)
+    avg_with_draw = models.DecimalField(max_digits=24, decimal_places=14, blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'lite_exchange_withdraw'
 
 
-class LiteReturnAnalysis(models.Model):
-    balance = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+class LiteKnewAddress2(models.Model):
+    address = models.CharField(unique=True, max_length=64, blank=True, null=True)
+    groupind = models.IntegerField()
+    onoroff = models.IntegerField(blank=True, null=True)
+    createtime = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'lite_knew_address2'
+
+
+class LiteMinerlist(models.Model):
     address = models.CharField(max_length=64, blank=True, null=True)
-    sum_in_volume = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    sum_out_volume = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'lite_minerlist'
+
+
+class LiteReturnAnalysis(models.Model):
+    balance = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    address = models.CharField(max_length=64, blank=True, null=True)
+    sum_in_volume = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    sum_out_volume = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
     sum_in_count = models.IntegerField(blank=True, null=True)
     sum_out_count = models.IntegerField(blank=True, null=True)
     address_type = models.SmallIntegerField(blank=True, null=True)
     last_transaction_datetime = models.DateTimeField(blank=True, null=True)
-    totreturn = models.DecimalField(
-        max_digits=47, decimal_places=13, blank=True, null=True)
-    totinvest = models.DecimalField(
-        max_digits=42, decimal_places=10, blank=True, null=True)
+    totreturn = models.DecimalField(max_digits=47, decimal_places=13, blank=True, null=True)
+    totinvest = models.DecimalField(max_digits=42, decimal_places=10, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -121,10 +124,8 @@ class LiteReturnAnalysis(models.Model):
 class LiteStockCashflow(models.Model):
     address_type = models.IntegerField(blank=True, null=True)
     his_date = models.DateField(blank=True, null=True)
-    in_amount = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    out_amount = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    in_amount = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    out_amount = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -132,10 +133,8 @@ class LiteStockCashflow(models.Model):
 
 
 class LiteTotalReturn(models.Model):
-    ret1 = models.DecimalField(
-        max_digits=43, decimal_places=10, blank=True, null=True)
-    invest = models.DecimalField(
-        max_digits=42, decimal_places=10, blank=True, null=True)
+    ret1 = models.DecimalField(max_digits=43, decimal_places=10, blank=True, null=True)
+    invest = models.DecimalField(max_digits=42, decimal_places=10, blank=True, null=True)
     address = models.CharField(max_length=64, blank=True, null=True)
 
     class Meta:
@@ -146,12 +145,9 @@ class LiteTotalReturn(models.Model):
 class LitecoinCashflowOutput(models.Model):
     address = models.CharField(max_length=64, blank=True, null=True)
     block_time = models.DateTimeField(blank=True, null=True)
-    input_value = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    output_value = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    miner_charge = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    input_value = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    output_value = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    miner_charge = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -161,21 +157,14 @@ class LitecoinCashflowOutput(models.Model):
 class LitecoinCashflowOutputSelected1(models.Model):
     address = models.CharField(max_length=64, blank=True, null=True)
     block_time = models.DateTimeField(blank=True, null=True)
-    input_value = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    output_value = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    miner_charge = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    input_value = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    output_value = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    miner_charge = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
     transaction_date = models.DateField(blank=True, null=True)
-    trans_volume_doller = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    avgcost = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    suminvolmebefore = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    transaction_return_rate = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    trans_volume_doller = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    avgcost = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    suminvolmebefore = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    transaction_return_rate = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
     win_or_lose = models.IntegerField(blank=True, null=True)
 
     class Meta:
@@ -186,21 +175,14 @@ class LitecoinCashflowOutputSelected1(models.Model):
 class LitecoinCashflowOutputWinneranalyst(models.Model):
     address = models.CharField(max_length=64, blank=True, null=True)
     block_time = models.DateTimeField(blank=True, null=True)
-    input_value = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    output_value = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    miner_charge = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    input_value = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    output_value = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    miner_charge = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
     transaction_date = models.DateField(blank=True, null=True)
-    trans_volume_doller = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    avgcost = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    balance = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    transaction_return_rate = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    trans_volume_doller = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    avgcost = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    balance = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    transaction_return_rate = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
     win_or_lose = models.IntegerField(blank=True, null=True)
 
     class Meta:
@@ -211,21 +193,14 @@ class LitecoinCashflowOutputWinneranalyst(models.Model):
 class LitecoinCashflowOutputWinneranalystBuyandsell(models.Model):
     address = models.CharField(max_length=64, blank=True, null=True)
     block_time = models.DateTimeField(blank=True, null=True)
-    input_value = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    output_value = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    miner_charge = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    input_value = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    output_value = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    miner_charge = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
     transaction_date = models.DateField(blank=True, null=True)
-    trans_volume_doller = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    last_tran_price = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    balance = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    transaction_return_rate = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    trans_volume_doller = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    last_tran_price = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    balance = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    transaction_return_rate = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
     win_or_lose = models.IntegerField(blank=True, null=True)
 
     class Meta:
@@ -236,21 +211,14 @@ class LitecoinCashflowOutputWinneranalystBuyandsell(models.Model):
 class LitecoinCashflowOutputWinneranalystCopy(models.Model):
     address = models.CharField(max_length=64, blank=True, null=True)
     block_time = models.DateTimeField(blank=True, null=True)
-    input_value = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    output_value = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    miner_charge = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    input_value = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    output_value = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    miner_charge = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
     transaction_date = models.DateField(blank=True, null=True)
-    trans_volume_doller = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    avgcost = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    balance = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    transaction_return_rate = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    trans_volume_doller = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    avgcost = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    balance = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    transaction_return_rate = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
     win_or_lose = models.IntegerField(blank=True, null=True)
 
     class Meta:
@@ -273,20 +241,37 @@ class LitecoinChartsDatas(models.Model):
 class ProcRecord(models.Model):
     address = models.CharField(max_length=64, blank=True, null=True)
     block_time = models.DateTimeField(blank=True, null=True)
-    avgcost = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
-    balance = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    avgcost = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    balance = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'proc_record'
 
 
+class TLiteBalanceRank1000His(models.Model):
+    ranking = models.IntegerField(blank=True, null=True)
+    address = models.CharField(max_length=64, blank=True, null=True)
+    balance = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    number_24_in_volume = models.DecimalField(db_column='24_in_volume', max_digits=20, decimal_places=10, blank=True, null=True)  # Field renamed because it wasn't a valid Python identifier.
+    number_24_out_volume = models.DecimalField(db_column='24_out_volume', max_digits=20, decimal_places=10, blank=True, null=True)  # Field renamed because it wasn't a valid Python identifier.
+    number_24_in_transcount = models.IntegerField(db_column='24_in_transcount', blank=True, null=True)  # Field renamed because it wasn't a valid Python identifier.
+    number_24_out_transcount = models.IntegerField(db_column='24_out_transcount', blank=True, null=True)  # Field renamed because it wasn't a valid Python identifier.
+    yesterday_balance = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
+    number_7d_balance = models.DecimalField(db_column='7d_balance', max_digits=20, decimal_places=10, blank=True, null=True)  # Field renamed because it wasn't a valid Python identifier.
+    number_30d_balance = models.DecimalField(db_column='30d_balance', max_digits=20, decimal_places=10, blank=True, null=True)  # Field renamed because it wasn't a valid Python identifier.
+    number_180d_balance = models.DecimalField(db_column='180d_balance', max_digits=20, decimal_places=10, blank=True, null=True)  # Field renamed because it wasn't a valid Python identifier.
+    number_365d_balance = models.DecimalField(db_column='365d_balance', max_digits=20, decimal_places=10, blank=True, null=True)  # Field renamed because it wasn't a valid Python identifier.
+    his_date = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 't_lite_balance_rank1000_his'
+
+
 class TLiteLongtermIndex(models.Model):
     address = models.CharField(max_length=64, blank=True, null=True)
-    weight = models.DecimalField(
-        max_digits=20, decimal_places=10, blank=True, null=True)
+    weight = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
 
@@ -308,11 +293,9 @@ class TLiteSpecialAddress(models.Model):
 
 class WinnerList(models.Model):
     address = models.CharField(max_length=64, blank=True, null=True)
-    wincount = models.DecimalField(
-        max_digits=23, decimal_places=0, blank=True, null=True)
+    wincount = models.DecimalField(max_digits=23, decimal_places=0, blank=True, null=True)
     count = models.BigIntegerField()
-    winrate = models.DecimalField(
-        max_digits=27, decimal_places=4, blank=True, null=True)
+    winrate = models.DecimalField(max_digits=27, decimal_places=4, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -321,14 +304,10 @@ class WinnerList(models.Model):
 
 class WinnerList1(models.Model):
     address = models.CharField(max_length=64, blank=True, null=True)
-    wincount = models.DecimalField(
-        max_digits=23, decimal_places=0, blank=True, null=True)
+    wincount = models.DecimalField(max_digits=23, decimal_places=0, blank=True, null=True)
     count = models.BigIntegerField()
-    winrate = models.DecimalField(
-        max_digits=27, decimal_places=4, blank=True, null=True)
-    # Field renamed to remove unsuitable characters.
-    b_totreturn_totinvest = models.DecimalField(
-        db_column='b.totreturn/totinvest', max_digits=61, decimal_places=17, blank=True, null=True)
+    winrate = models.DecimalField(max_digits=27, decimal_places=4, blank=True, null=True)
+    b_totreturn_totinvest = models.DecimalField(db_column='b.totreturn/totinvest', max_digits=61, decimal_places=17, blank=True, null=True)  # Field renamed to remove unsuitable characters.
 
     class Meta:
         managed = False

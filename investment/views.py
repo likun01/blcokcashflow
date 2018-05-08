@@ -12,14 +12,18 @@ from common.utils import datetime2microsecond, avg, hide_address, coin_name,\
     send_mail_files
 from common.models_ltc_db import IndexHis, TLiteSpecialAddress,\
     LiteStockCashflow, LiteExchangeRecharge, LiteExchangeWithdraw,\
-    LitecoinChartsDatas
+    LitecoinChartsDatas, TLiteBalanceRank1000His, LiteMinerlist,\
+    LiteKnewAddress2
 from usercenter.models import Subscribe
 from collections import OrderedDict
 from django.db import connections
 from blockchain_db.models import BitcoinChartsDatas, TBitSpecialAddress,\
-    BitExchangeRecharge, BitExchangeWithdraw, BitIndexHis
+    BitExchangeRecharge, BitExchangeWithdraw, BitIndexHis,\
+    TBitBalanceRank1000His
 import pygal
 from django.conf import settings
+from django.db.models.aggregates import Sum, Count
+from blockchain_db.models import BitMinerlist, BitKnewAddress2
 
 
 MICROSECONDDAY = 86400000
@@ -507,9 +511,9 @@ class ImagesTempAPIView(APIView):
         hq_chart = pygal.Line()
         hq_chart.x_labels = hq_date
         hq_chart.add(u'{}行情'.format(coin_name(coin)), hq_data)
-        hq_path = u'{}chart/{}_hq_{}_{}.png'.format(
+        hq_path = u'{}chart/{}_hq_{}_{}.svg'.format(
             settings.MEDIA_ROOT, coin, start, end)
-        hq_chart.render_to_png(hq_path)
+        hq_chart.render_to_file(hq_path)
 
         # 账户买卖比例
         if coin == 'BTC':
@@ -577,42 +581,102 @@ class ImagesTempAPIView(APIView):
 
         bar_chart = pygal.HorizontalStackedBar(print_values=True)
         bar_chart.x_labels = ('', u'聪明账户', u'韭菜账户',  '')
-        if buy1 and sell1:
+        if buy1 and buy2:
             bar_chart.add(
                 u'买', (buy1 / (sell1 + buy1), buy2 / (sell2 + buy2)))
             bar_chart.add(
                 u'卖', (sell1 / (sell1 + buy1), sell2 / (sell2 + buy2)))
 
-        bar_chart_path = u'{}chart/{}_bar_{}_{}.png'.format(
+        bar_chart_path = u'{}chart/{}_bar_{}_{}.svg'.format(
             settings.MEDIA_ROOT, coin, start, end)
-        bar_chart.render_to_png(bar_chart_path)
+        bar_chart.render_to_file(bar_chart_path)
 
         # 前5大交易所充值提现
+        if coin == 'BTC':
+            top5 = [19, 124, 84, 107, 602]
+            recharge = BitExchangeRecharge.objects.using('btc').filter(groupind__in=top5, trans_date__gte=start, trans_date__lte=end)\
+                .values('trans_date').annotate(sum_recharge=Sum('tot_recharge')).order_by('trans_date')
+            withdraw = BitExchangeWithdraw.objects.using('btc').filter(groupind__in=top5, trans_date__gte=start, trans_date__lte=end)\
+                .values('trans_date').annotate(sum_withdraw=Sum('tot_withdraw')).order_by('trans_date')
+        else:
+            top5 = [21, 1, 110, 101, 28]
+            recharge = LiteExchangeRecharge.objects.using('ltc').filter(groupind__in=top5, trans_date__gte=start, trans_date__lte=end)\
+                .values('trans_date').annotate(sum_recharge=Sum('tot_recharge')).order_by('trans_date')
+            withdraw = LiteExchangeWithdraw.objects.using('ltc').filter(groupind__in=top5, trans_date__gte=start, trans_date__lte=end)\
+                .values('trans_date').annotate(sum_withdraw=Sum('tot_withdraw')).order_by('trans_date')
+        recharge_data = map(lambda x: x.get('sum_recharge'), recharge)
+        x_labels = map(lambda x: x.get('trans_date'), recharge)
+        withdraw_data = map(lambda x: x.get('sum_withdraw'), withdraw)
         tran_chart = pygal.Line()
-        tran_chart.x_labels = hq_date
-        tran_chart.add(u'充值', hq_data)
-        tran_chart.add(u'提现', hq_data)
-        tran_chart_path = u'{}chart/{}_tran_{}_{}.png'.format(
+        tran_chart.x_labels = x_labels
+        tran_chart.add(u'充值', recharge_data)
+        tran_chart.add(u'提现', withdraw_data)
+        tran_chart_path = u'{}chart/{}_tran_{}_{}.svg'.format(
             settings.MEDIA_ROOT, coin, start, end)
-        tran_chart.render_to_png(tran_chart_path)
+        tran_chart.render_to_file(tran_chart_path)
 
         # 前1000持仓变化
+
+        if coin == 'BTC':
+            qs = TBitBalanceRank1000His.objects.using('btc').filter(his_date__gte=start, his_date__lte=end)\
+                .values('his_date').annotate(sum_balance=Sum('balance')).order_by('his_date')
+            org_address = map(lambda x: x.address, BitKnewAddress2.objects.using(
+                'btc').filter(onoroff=1))
+            org_exclude_qs = TBitBalanceRank1000His.objects.using('btc').filter(his_date__gte=start, his_date__lte=end).exclude(address__in=org_address)\
+                .values('his_date').annotate(sum_balance=Sum('balance')).order_by('his_date')
+        else:
+            qs = TLiteBalanceRank1000His.objects.using('ltc').filter(his_date__gte=start, his_date__lte=end)\
+                .values('his_date').annotate(sum_balance=Sum('balance')).order_by('his_date')
+            org_address = map(lambda x: x.address, LiteKnewAddress2.objects.using(
+                'ltc').filter(onoroff=1))
+            org_exclude_qs = TLiteBalanceRank1000His.objects.using('ltc').filter(his_date__gte=start, his_date__lte=end).exclude(address__in=org_address)\
+                .values('his_date').annotate(sum_balance=Sum('balance')).order_by('his_date')
+
+        hold_data = map(lambda x: x.get('sum_balance'), qs)
+        org_exclude_hold_data = map(
+            lambda x: x.get('sum_balance'), org_exclude_qs)
+        x_labels = map(lambda x: x.get('his_date'), qs)
         hold_chart = pygal.StackedLine(fill=True)
-        hold_chart.x_labels = hq_date
-        hold_chart.add(u'前1000持仓', hq_data)
-        hold_chart.add(u'前1000(排除交易所)', hq_data)
-        hold_chart_path = u'{}chart/{}_hold_{}_{}.png'.format(
+        hold_chart.x_labels = x_labels
+        hold_chart.add(u'前1000持仓', hold_data)
+        hold_chart.add(u'前1000(排除交易所)', org_exclude_hold_data)
+        hold_chart_path = u'{}chart/{}_hold_{}_{}.svg'.format(
             settings.MEDIA_ROOT, coin, start, end)
-        hold_chart.render_to_png(hold_chart_path)
+        hold_chart.render_to_file(hold_chart_path)
 
         # 用户类型持仓
+        if coin == 'BTC':
+            all_balance = TBitBalanceRank1000His.objects.using('btc').filter(his_date__gte=start, his_date__lte=end)\
+                .aggregate(sum_balance=Sum('balance')).get('sum_balance')
+            miner_address = map(lambda x: x.address,
+                                BitMinerlist.objects.using('btc').all())
+            org_address = map(lambda x: x.address, BitKnewAddress2.objects.using(
+                'btc').filter(onoroff=1))
+            org_balance = TBitBalanceRank1000His.objects.using('btc').filter(his_date__gte=start, his_date__lte=end).filter(address__in=org_address)\
+                .aggregate(sum_balance=Sum('balance')).get('sum_balance')
+            miner_balance = TBitBalanceRank1000His.objects.using('btc').filter(his_date__gte=start, his_date__lte=end).filter(address__in=miner_address)\
+                .aggregate(sum_balance=Sum('balance')).get('sum_balance')
+        else:
+            all_balance = TLiteBalanceRank1000His.objects.using('ltc').filter(his_date__gte=start, his_date__lte=end)\
+                .aggregate(sum_balance=Sum('balance')).get('sum_balance')
+            miner_address = map(lambda x: x.address,
+                                LiteMinerlist.objects.using('ltc').all())
+            org_address = map(lambda x: x.address, LiteKnewAddress2.objects.using(
+                'ltc').filter(onoroff=1))
+            org_balance = TLiteBalanceRank1000His.objects.using('ltc').filter(his_date__gte=start, his_date__lte=end).filter(address__in=org_address)\
+                .aggregate(sum_balance=Sum('balance')).get('sum_balance')
+            miner_balance = TLiteBalanceRank1000His.objects.using('ltc').filter(his_date__gte=start, his_date__lte=end).filter(address__in=miner_address)\
+                .aggregate(sum_balance=Sum('balance')).get('sum_balance')
+
+        org_data = org_balance / all_balance
+        miner_data = miner_balance / all_balance
         pie_chart = pygal.Pie(print_values=True)
-        pie_chart.add(u'交易所', 33.3)
-        pie_chart.add(u'矿机', 33.3)
-        pie_chart.add(u'其他', 33.4)
-        pie_chart_path = u'{}chart/{}_pie_{}_{}.png'.format(
+        pie_chart.add(u'交易所',  '{:.2%}'.format(org_data))
+        pie_chart.add(u'矿机', '{:.2%}'.format(miner_data))
+        pie_chart.add(u'其他', '{:.2%}'.format(1 - org_data - miner_data))
+        pie_chart_path = u'{}chart/{}_pie_{}_{}.svg'.format(
             settings.MEDIA_ROOT, coin, start, end)
-        pie_chart.render_to_png(pie_chart_path)
+        pie_chart.render_to_file(pie_chart_path)
 
 #         send_mail_files(u'{}至{}{}模版'.format(
 #             start, end, coin_name(coin)), [email, ], [hq_path, bar_chart_path,
