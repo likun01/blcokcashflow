@@ -58,7 +58,6 @@ def build_image_temp(coin, start, end, email):
 
     custom_css = '''
               {{ id }}text {
-                fill: green;
                 font-family: Songti;
               }
               {{ id }}.legends .legend text {
@@ -80,6 +79,7 @@ def build_image_temp(coin, start, end, email):
 
     config = pygal.Config()
     config.css.append('file://' + custom_css_file)
+    config.x_value_formatter = lambda x: x.strftime('%-m/%-d')
 
     hq_chart = pygal.Line(config)
     hq_chart.x_labels = hq_date
@@ -180,7 +180,8 @@ def build_image_temp(coin, start, end, email):
     recharge_data = map(lambda x: x.get('sum_recharge'), recharge)
     x_labels = map(lambda x: x.get('trans_date'), recharge)
     withdraw_data = map(lambda x: x.get('sum_withdraw'), withdraw)
-    tran_chart = pygal.Line()
+
+    tran_chart = pygal.Line(config)
     tran_chart.x_labels = x_labels
     tran_chart.add(u'充值', recharge_data)
     tran_chart.add(u'提现', withdraw_data)
@@ -262,6 +263,7 @@ def build_image_temp(coin, start, end, email):
             .aggregate(sum_balance=Sum('balance')).get('sum_balance', 0)
 
     pie_chart = pygal.Pie(config, print_values=True)
+    pie_chart.value_formatter = lambda x: '{:.2%}'.format(x)
     if all_balance:
         org_data = org_balance / all_balance
         miner_data = miner_balance / all_balance
