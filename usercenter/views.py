@@ -313,10 +313,9 @@ class MemberPaymentAPIView(APIView):
             token = settings.BITPAY_TOKEN
             data = client.create_invoice({"price": price, "currency": ms.coin_type, "transactionSpeed": "medium", "fullNotifications": "true", "notificationURL":
                                           notificationURL, "buyer": {"email": user.email}, "orderId": order_id, "token": token})
-
-            order = MemberOrder.objects.create(order_id=order_id, user=user, service=ms, guid=data.get('guid', ''), url=data.get('url'), start_date=start_date, end_date=end_date, coin_type=ms.coin_type, coin_amount=price, status=data.get(
-                'status'), exception_status=data.get('exceptionStatus'), invoice_id=data.get('id'), addresses=data.get('addresses'), origin=data)
             debug('payment_data', data)
+            order = MemberOrder.objects.create(order_id=order_id, user=user, service=ms, guid=data.get('guid', ''), url=data.get('url'), start_date=start_date, end_date=end_date, coin_type=ms.coin_type, coin_amount=price, status=data.get(
+                'status'), exception_status=data.get('exceptionStatus'), invoice_id=data.get('id'), addresses=data.get('addresses', ''), origin=data)
             return Response({'invoice_id': order.invoice_id, 'url': data.get('url')})
         elif ms.coin_type == 'BCF':
             price = round(float(ms.price) / settings.BCF_RATE, 8)
