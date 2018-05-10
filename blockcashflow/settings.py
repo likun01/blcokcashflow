@@ -36,12 +36,12 @@ DEBUG = True
 
 ADMINS = (('likun', 'likun@xin-shui.com'), ('lishaojie', 'lisj@xin-shui.com'),)
 EMAIL_SUBJECT_PREFIX = '[500 ERROR FOR ADMIN]'
-EMAIL_HOST = 'smtp.mxhichina.com'
-EMAIL_PORT = 25
-SERVER_EMAIL = 'server_noreply@xin-shui.com'
+EMAIL_HOST = 'imap-mail.outlook.com'
+EMAIL_PORT = 993
+SERVER_EMAIL = 'blockcashflow@outlook.com'
 EMAIL_HOST_USER = SERVER_EMAIL
-EMAIL_HOST_PASSWORD = 'AAaa1234'
-EMAIL_USE_TLS = False
+EMAIL_HOST_PASSWORD = 'BBbb5678'
+EMAIL_USE_TLS = True
 
 ALLOWED_HOSTS = ['*']
 

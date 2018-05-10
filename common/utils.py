@@ -132,7 +132,6 @@ def coin_name(coin):
 
 def send_mail_files(subject, recipient_list, files):
     sender = settings.SERVER_EMAIL
-
     smtpserver = settings.EMAIL_HOST
     username = settings.EMAIL_HOST_USER
     password = settings.EMAIL_HOST_PASSWORD
@@ -150,6 +149,8 @@ def send_mail_files(subject, recipient_list, files):
 
     smtp = smtplib.SMTP()
     smtp.connect(smtpserver)
+    if settings.EMAIL_USE_TLS:
+        smtp.starttls()
     smtp.login(username, password)
     smtp.sendmail(sender, recipient_list, msgRoot.as_string())
     smtp.quit()
