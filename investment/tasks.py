@@ -60,7 +60,7 @@ def build_image_temp(coin, start, end, email):
               {{ id }}.graph > .background {
                 fill: rgba(255,255,255,0);
               }
-              {{ id }}.plot.background {
+              {{ id }}.plot > .background {
                 fill: rgba(255,255,255,0);
               }
               {{ id }}.title {
@@ -279,6 +279,7 @@ def build_image_temp(coin, start, end, email):
 
     pie_chart = pygal.Pie(config, print_values=True, title=u'用户类型持仓占比')
     pie_chart.value_formatter = lambda x: '{:.2%}'.format(x)
+    pie_chart.legend_at_bottom_columns = 3
     if all_balance:
         org_data = org_balance / all_balance
         miner_data = miner_balance / all_balance
