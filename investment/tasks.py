@@ -57,9 +57,12 @@ def build_image_temp(coin, start, end, email):
         hq_data = map(lambda x: x.price_usd, hq)
 
     custom_css = '''
-              {{ id }}.plot {
-                background-color: transparent;
-               }
+              {{ id }}.graph > .background {
+                fill: rgba(255,255,255,0);
+              }
+              {{ id }}.plot.background {
+                fill: rgba(255,255,255,0);
+              }
               {{ id }}.title {
                 font-family: Songti;
               }
@@ -88,6 +91,7 @@ def build_image_temp(coin, start, end, email):
     config.x_value_formatter = lambda x: x.strftime('%-m/%-d')
     config.max_scale = 7
     config.min_scale = 7
+    config.legend_at_bottom = True
 
     hq_chart = pygal.Line(config, title=u'{}行情'.format(
         coin_name(coin)), show_legend=False)
