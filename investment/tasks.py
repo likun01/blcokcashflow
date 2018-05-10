@@ -57,6 +57,9 @@ def build_image_temp(coin, start, end, email):
         hq_data = map(lambda x: x.price_usd, hq)
 
     custom_css = '''
+              {{ id }}.title {
+                font-family: Songti;
+              }
               {{ id }}text {
                 font-family: Songti;
               }
@@ -81,9 +84,9 @@ def build_image_temp(coin, start, end, email):
     config.css.append('file://' + custom_css_file)
     config.x_value_formatter = lambda x: x.strftime('%-m/%-d')
 
-    hq_chart = pygal.Line(config)
+    hq_chart = pygal.Line(config, title=u'{}行情'.format(coin_name(coin)))
     hq_chart.x_labels = hq_date
-    hq_chart.add(u'{}行情'.format(coin_name(coin)), hq_data)
+    hq_chart.add('', hq_data)
     hq_path = u'{}chart/{}_hq_{}_{}.png'.format(
         settings.MEDIA_ROOT, coin, start, end)
     hq_chart.render_to_png(hq_path)
@@ -152,7 +155,8 @@ def build_image_temp(coin, start, end, email):
         buy_sql, [tuple(addresses2), start, end])
     buy2 = cursor.fetchone()[0]
 
-    bar_chart = pygal.HorizontalStackedBar(config, print_values=True)
+    bar_chart = pygal.HorizontalStackedBar(
+        config, print_values=True, title=u'聪明账户与韭菜账户买卖比例')
     bar_chart.x_labels = ('', u'聪明账户', u'韭菜账户',  '')
     if buy1 and buy2:
         bar_chart.add(
@@ -181,7 +185,7 @@ def build_image_temp(coin, start, end, email):
     x_labels = map(lambda x: x.get('trans_date'), recharge)
     withdraw_data = map(lambda x: x.get('sum_withdraw'), withdraw)
 
-    tran_chart = pygal.Line(config)
+    tran_chart = pygal.Line(config, title=u'前5大交易所充值提现')
     tran_chart.x_labels = x_labels
     tran_chart.add(u'充值', recharge_data)
     tran_chart.add(u'提现', withdraw_data)
@@ -219,7 +223,8 @@ def build_image_temp(coin, start, end, email):
     org_exclude_hold_data = map(
         lambda x: x.get('sum_balance'), org_exclude_qs)
     x_labels = map(lambda x: x.get('his_date'), qs)
-    hold_chart = pygal.StackedLine(config, fill=True)
+
+    hold_chart = pygal.StackedLine(config, fill=True, title=u'前1000地址累计持仓')
     hold_chart.x_labels = x_labels
     hold_chart.add(u'前1000持仓', hold_data)
     hold_chart.add(u'前1000(排除交易所)', org_exclude_hold_data)
@@ -262,7 +267,7 @@ def build_image_temp(coin, start, end, email):
         miner_balance = TLiteBalanceRank1000His.objects.using('ltc').filter(his_date__gte=start, his_date__lte=end).filter(address__in=miner_address)\
             .aggregate(sum_balance=Sum('balance')).get('sum_balance', 0)
 
-    pie_chart = pygal.Pie(config, print_values=True)
+    pie_chart = pygal.Pie(config, print_values=True, title=u'用户类型持仓占比')
     pie_chart.value_formatter = lambda x: '{:.2%}'.format(x)
     if all_balance:
         org_data = org_balance / all_balance
