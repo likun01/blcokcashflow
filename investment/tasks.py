@@ -57,6 +57,9 @@ def build_image_temp(coin, start, end, email):
         hq_data = map(lambda x: x.price_usd, hq)
 
     custom_css = '''
+              {{ id }} {
+                background-color: transparent;
+               }
               {{ id }}.title {
                 font-family: Songti;
               }
@@ -83,8 +86,10 @@ def build_image_temp(coin, start, end, email):
     config = pygal.Config()
     config.css.append('file://' + custom_css_file)
     config.x_value_formatter = lambda x: x.strftime('%-m/%-d')
+    config.max_scale = 6
 
-    hq_chart = pygal.Line(config, title=u'{}行情'.format(coin_name(coin)))
+    hq_chart = pygal.Line(config, title=u'{}行情'.format(
+        coin_name(coin)), show_legend=False)
     hq_chart.x_labels = hq_date
     hq_chart.add('', hq_data)
     hq_path = u'{}chart/{}_hq_{}_{}.png'.format(
