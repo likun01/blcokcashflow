@@ -234,11 +234,10 @@ def build_image_temp(coin, start, end, email):
         lambda x: x.get('sum_balance'), org_exclude_qs)
     x_labels = map(lambda x: x.get('his_date'), qs)
 
-    hold_chart = pygal.StackedLine(config, fill=True, title=u'前1000地址累计持仓')
+    hold_chart = pygal.Line(config, fill=True, title=u'前1000地址累计持仓')
     hold_chart.x_labels = x_labels
-
-    hold_chart.add(u'前1000(排除交易所)', org_exclude_hold_data)
     hold_chart.add(u'前1000持仓', hold_data)
+    hold_chart.add(u'前1000(排除交易所)', org_exclude_hold_data)
     hold_chart_path = u'{}chart/{}_hold_{}_{}.png'.format(
         settings.MEDIA_ROOT, coin, start, end)
     hold_chart.render_to_png(hold_chart_path)
