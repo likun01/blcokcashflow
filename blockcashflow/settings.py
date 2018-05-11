@@ -34,17 +34,17 @@ SECRET_KEY = 'n*p#-&dre7f#-yuyg=vz%p%9g8%8y2e$_49vm5jax8yur@mzrq'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ADMINS = (('likun', 'likun@xin-shui.com'), ('lishaojie', 'lisj@xin-shui.com'),)
+ADMINS = (('likun', 'likun@xin-shui.com'),)
 EMAIL_SUBJECT_PREFIX = '[500 ERROR FOR ADMIN]'
-EMAIL_HOST = 'imap-mail.outlook.com'
-EMAIL_PORT = 993
+EMAIL_HOST = 'smtp.office365.com'
+EMAIL_PORT = 587
 SERVER_EMAIL = 'blockcashflow@outlook.com'
 EMAIL_HOST_USER = SERVER_EMAIL
 EMAIL_HOST_PASSWORD = 'BBbb5678'
 EMAIL_USE_TLS = True
 
-ALLOWED_HOSTS = ['*']
 
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
